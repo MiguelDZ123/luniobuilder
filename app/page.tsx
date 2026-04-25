@@ -1,109 +1,31 @@
-"use client";
+import Link from 'next/link'
+import React from 'react'
 
-import { useEffect, useState } from 'react';
-import { TopBar } from './components/TopBar';
-import { LeftPanel } from './components/panels/LeftPanel';
-import { RightPanel } from './components/panels/RightPanel';
-import { Canvas } from './components/canvas/Canvas';
-import { ContextMenu } from './components/ContextMenu';
-import { useBuilderStore } from './stores/builderStore';
-
-function App() {
-  const {
-    isPreviewMode,
-    selectedElementId,
-    getElementById,
-    deleteElement,
-    duplicateElement,
-    toggleElementVisibility,
-    toggleElementLock,
-    undo,
-    redo,
-  } = useBuilderStore();
-
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; id: string } | null>(null);
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement).tagName);
-      if (isInput) return;
-
-      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
-        e.preventDefault();
-        if (e.shiftKey) redo();
-        else undo();
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'y') {
-        e.preventDefault();
-        redo();
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'd') {
-        e.preventDefault();
-        if (selectedElementId) duplicateElement(selectedElementId);
-      }
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (selectedElementId) {
-          e.preventDefault();
-          deleteElement(selectedElementId);
-        }
-      }
-      if (e.key === 'Escape') {
-        useBuilderStore.getState().selectElement(null);
-        setContextMenu(null);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedElementId, undo, redo, duplicateElement, deleteElement]);
-
-  // Context menu
-  useEffect(() => {
-    const handleContextMenu = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const elementEl = target.closest('[data-element-id]') as HTMLElement | null;
-      if (elementEl) {
-        e.preventDefault();
-        const id = elementEl.dataset.elementId!;
-        setContextMenu({ x: e.clientX, y: e.clientY, id });
-      }
-    };
-
-    window.addEventListener('contextmenu', handleContextMenu);
-    return () => window.removeEventListener('contextmenu', handleContextMenu);
-  }, []);
-
-  const contextElement = contextMenu ? getElementById(contextMenu.id) : null;
-
+const page = () => {
   return (
-    <div className="h-screen flex flex-col bg-[#0d1117] overflow-hidden font-sans">
-      <TopBar />
-
-      <div className="flex flex-1 overflow-hidden">
-        {!isPreviewMode && <LeftPanel />}
-
-        <Canvas />
-
-        {!isPreviewMode && <RightPanel />}
+    <>
+      <div className='absolute mt-0 flex flex-row items-center gap-2 py-4 z-10 px-[15%]'>
+        <h1 className='text-white font-black text-2xl'>LUNIO Builder</h1>
       </div>
-
-      {contextMenu && contextElement && (
-        <ContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          elementId={contextMenu.id}
-          onClose={() => setContextMenu(null)}
-          onDelete={deleteElement}
-          onDuplicate={duplicateElement}
-          onToggleVisibility={toggleElementVisibility}
-          onToggleLock={toggleElementLock}
-          isHidden={contextElement.hidden}
-          isLocked={contextElement.locked}
-        />
-      )}
-    </div>
-  );
+      <div className='p-8 bg-[#111114] text-white min-h-screen flex flex-row items-center gap-10 px-[15%]'>
+        <div className='flex flex-col gap-6'>
+          <h1 className='text-6xl font-black'>Build your dream website with our <span className='bg-linear-to-r from-[#1D976C] to-[#93F9B9] bg-clip-text text-transparent uppercase'>no-code</span> platform</h1>
+          <p className='text-gray-400 mt-4'>LUNIO Builder is a no-code website builder that allows you to create stunning websites with ease. With its intuitive drag-and-drop interface, you can design and publish your website in minutes, without any coding knowledge.</p>
+          <div className='flex flex-col sm:flex-row gap-4'>
+            <Link href="/editor" className='bg-linear-to-r from-[#1D976C] to-[#93F9B9] text-gray-800 font-bold py-2 px-4 rounded-lg'>
+              Get Started
+            </Link>
+            <Link href="/docs" className='text-white py-2 px-4 underline hover:text-gray-300 transition-colors font-bold underline-offset-4'>
+              View Documentation
+            </Link>
+          </div>
+        </div>
+        <div className='border-4 border-white/10 p-2 rounded-2xl'>
+          <img src="/hero.gif" alt="Placeholder" />
+        </div>
+      </div>
+    </>
+  )
 }
 
-export default App;
+export default page

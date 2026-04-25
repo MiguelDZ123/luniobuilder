@@ -64,7 +64,7 @@ export const getElementDefaults = (type: ElementType): ElementDefaults => {
         name: 'Container',
         props: {},
         styles: {
-          display: 'flex',
+          display: 'block',
           flexDirection: 'column',
           width: '100%',
           padding: '16px',
@@ -80,7 +80,6 @@ export const getElementDefaults = (type: ElementType): ElementDefaults => {
           fontWeight: '700',
           lineHeight: '1.2',
           color: '#111827',
-          marginBottom: '16px',
         },
       };
     case 'paragraph':
@@ -341,6 +340,175 @@ export const getEffectiveStyles = (
 
 export const stylesToCSS = (styles: StyleProperties): React.CSSProperties => {
   return styles as React.CSSProperties;
+};
+
+const camelToKebabCase = (key: string): string => {
+  return key.replace(/[A-Z]/g, match => `-${match.toLowerCase()}`);
+};
+
+export const styleObjectToCssString = (styles: StyleProperties): string => {
+  return Object.entries(styles)
+    .filter(([, value]) => value !== undefined && value !== null && value !== '')
+    .map(([key, value]) => `${camelToKebabCase(key)}:${String(value)}`)
+    .join('; ');
+};
+
+const escapeHtml = (text?: string): string => {
+  return String(text || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+};
+
+const escapeJsxString = (text?: string): string => {
+  return String(text || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r');
+};
+
+const styleObjectToJsxString = (styles: StyleProperties): string => {
+  const entries = Object.entries(styles)
+    .filter(([, value]) => value !== undefined && value !== null && value !== '')
+    .map(([key, value]) => `${key}: '${escapeJsxString(String(value))}'`);
+  return entries.join(', ');
+};
+
+const renderElementToReact = (element: BuilderElement, indent = 2): string => {
+  const indentation = ' '.repeat(indent);
+  const style = element.styles.desktop || {};
+  const styleString = styleObjectToJsxString(style);
+  const attrs = styleString ? ` style={{${styleString}}}` : '';
+  const text = escapeJsxString(element.props.text as string || '');
+  const placeholder = escapeJsxString(element.props.placeholder as string || '');
+  const href = escapeJsxString(element.props.href as string || '#');
+  const src = escapeJsxString(element.props.src as string || '');
+  const alt = escapeJsxString(element.props.alt as string || '');
+  const iconName = escapeJsxString(element.props.iconName as string || '★');
+  const inputType = escapeJsxString(element.props.type as string || 'text');
+
+  const renderChildren = (): string => {
+    const childStrings = element.children.map(child => renderElementToReact(child, indent + 2));
+    return childStrings.length ? `\n${childStrings.join('\n')}\n${indentation}` : '';
+  };
+
+  const children = renderChildren();
+
+  switch (element.type) {
+    case 'section':
+      return `${indentation}<section${attrs}>${children}</section>`;
+    case 'navbar':
+      return `${indentation}<nav${attrs}>${children}</nav>`;
+    case 'form':
+      return `${indentation}<form${attrs}>${children}</form>`;
+    case 'list':
+      return `${indentation}<ul${attrs}>${children}</ul>`;
+    case 'columns':
+    case 'grid':
+    case 'hero':
+    case 'card':
+    case 'div':
+      return `${indentation}<div${attrs}>${children}</div>`;
+    case 'heading': {
+      const level = element.props.level || 1;
+      const tag = `h${Math.min(Math.max(level, 1), 6)}`;
+      return `${indentation}<${tag}${attrs}>${text}</${tag}>`;
+    }
+    case 'paragraph':
+      return `${indentation}<p${attrs}>${text}</p>`;
+    case 'button':
+      return `${indentation}<button type="button"${attrs}>${text}</button>`;
+    case 'link':
+      return `${indentation}<a href="${href}"${attrs}>${text}</a>`;
+    case 'image':
+      return `${indentation}<img src="${src}" alt="${alt}"${attrs} />`;
+    case 'video':
+      return `${indentation}<video controls src="${src}"${attrs}></video>`;
+    case 'divider':
+      return `${indentation}<hr${attrs} />`;
+    case 'spacer':
+      return `${indentation}<div${attrs}></div>`;
+    case 'input':
+      return `${indentation}<input type="${inputType}" placeholder="${placeholder}"${attrs} />`;
+    case 'textarea':
+      return `${indentation}<textarea placeholder="${placeholder}"${attrs}></textarea>`;
+    case 'icon':
+      return `${indentation}<span${attrs}>${iconName}</span>`;
+    case 'listItem':
+      return `${indentation}<li${attrs}>${text}</li>`;
+    default:
+      return `${indentation}<div${attrs}>${children}</div>`;
+  }
+};
+
+export const renderElementToReactString = (element: BuilderElement): string => {
+  return renderElementToReact(element, 2);
+};
+
+export const renderElementToHtml = (element: BuilderElement): string => {
+  const style = styleObjectToCssString(element.styles.desktop || {});
+  const attrs = style ? ` style="${style}"` : '';
+  const text = escapeHtml(element.props.text as string || '');
+  const placeholder = escapeHtml(element.props.placeholder as string || '');
+  const href = escapeHtml(element.props.href as string || '#');
+  const src = escapeHtml(element.props.src as string || '');
+  const alt = escapeHtml(element.props.alt as string || '');
+  const iconName = escapeHtml(element.props.iconName as string || '★');
+  const inputType = escapeHtml(element.props.type as string || 'text');
+
+  const renderChildren = (): string => {
+    return element.children.map(child => renderElementToHtml(child)).join('');
+  };
+
+  switch (element.type) {
+    case 'section':
+      return `<section${attrs}>${renderChildren()}</section>`;
+    case 'navbar':
+      return `<nav${attrs}>${renderChildren()}</nav>`;
+    case 'form':
+      return `<form${attrs}>${renderChildren()}</form>`;
+    case 'list':
+      return `<ul${attrs}>${renderChildren()}</ul>`;
+    case 'columns':
+    case 'grid':
+    case 'hero':
+    case 'card':
+      return `<div${attrs}>${renderChildren()}</div>`;
+    case 'div':
+      return `<div${attrs}>${renderChildren()}</div>`;
+    case 'heading': {
+      const level = element.props.level || 1;
+      const tag = `h${Math.min(Math.max(level, 1), 6)}`;
+      return `<${tag}${attrs}>${text}</${tag}>`;
+    }
+    case 'paragraph':
+      return `<p${attrs}>${text}</p>`;
+    case 'button':
+      return `<button type="button"${attrs}>${text}</button>`;
+    case 'link':
+      return `<a href="${href}"${attrs}>${text}</a>`;
+    case 'image':
+      return `<img src="${src}" alt="${alt}"${attrs} />`;
+    case 'video':
+      return `<video controls src="${src}"${attrs}></video>`;
+    case 'divider':
+      return `<hr${attrs} />`;
+    case 'spacer':
+      return `<div${attrs}></div>`;
+    case 'input':
+      return `<input type="${inputType}" placeholder="${placeholder}"${attrs} />`;
+    case 'textarea':
+      return `<textarea placeholder="${placeholder}"${attrs}></textarea>`;
+    case 'icon':
+      return `<span${attrs}>${iconName}</span>`;
+    case 'listItem':
+      return `<li${attrs}>${text}</li>`;
+    default:
+      return `<div${attrs}>${renderChildren()}</div>`;
+  }
 };
 
 import React from 'react';

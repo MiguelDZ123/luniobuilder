@@ -12,7 +12,7 @@ export const RightPanel: React.FC = () => {
   const page = getCurrentPage();
 
   return (
-    <div className="w-64 bg-[#111827] border-l border-gray-800 flex flex-col h-full">
+    <div className="w-64 bg-[#111114] border-l border-gray-800 flex flex-col h-full">
       {element ? (
         <>
           {/* Tabs */}
@@ -23,7 +23,7 @@ export const RightPanel: React.FC = () => {
                 onClick={() => setRightPanelTab(tab)}
                 className={`flex-1 py-3 text-xs font-medium capitalize transition-colors ${
                   rightPanelTab === tab
-                    ? 'text-white border-b-2 border-blue-500 bg-blue-500/5'
+                    ? 'text-white border-b-2 border-blue-300 bg-blue-300/5'
                     : 'text-gray-400 hover:text-gray-200'
                 }`}
               >
@@ -42,7 +42,7 @@ export const RightPanel: React.FC = () => {
           <div className="flex border-b border-gray-800">
             <button
               onClick={() => setRightPanelTab('seo')}
-              className="flex-1 py-3 text-xs font-medium text-white border-b-2 border-blue-500 bg-blue-500/5"
+              className="flex-1 py-3 text-xs font-medium text-white border-b-2 border-blue-300 bg-blue-300/5"
             >
               Page Settings
             </button>
@@ -91,7 +91,7 @@ interface InputRowProps {
 const InputRow: React.FC<InputRowProps> = ({ label, value, onChange, type = 'text', placeholder, unit, options }) => {
   return (
     <div className="flex items-center gap-2 mb-2">
-      <span className="text-xs text-gray-500 w-20 flex-shrink-0">{label}</span>
+      <span className="text-xs text-gray-500 w-20 shrink-0">{label}</span>
       {options ? (
         <select
           value={value}
@@ -126,7 +126,7 @@ interface ColorInputProps {
 const ColorInput: React.FC<ColorInputProps> = ({ label, value, onChange }) => {
   return (
     <div className="flex items-center gap-2 mb-2">
-      <span className="text-xs text-gray-500 w-20 flex-shrink-0">{label}</span>
+      <span className="text-xs text-gray-500 w-20 shrink-0">{label}</span>
       <div className="flex-1 flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5">
         <input
           type="color"
@@ -320,7 +320,7 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ element, breakpoint }) => {
             { label: 'Max H', key: 'maxHeight' as const },
           ].map(({ label, key }) => (
             <div key={key} className="flex items-center gap-1">
-              <span className="text-xs text-gray-600 w-8 flex-shrink-0">{label}</span>
+              <span className="text-xs text-gray-600 w-8 shrink-0">{label}</span>
               <input
                 type="text"
                 value={(styles as Record<string, string>)[key] || ''}

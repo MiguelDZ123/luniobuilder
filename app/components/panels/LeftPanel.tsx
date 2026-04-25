@@ -8,34 +8,34 @@ import { ElementType, BuilderElement, Page } from '../../types/builder';
 import { COMPONENT_CATEGORIES, COMPONENT_LABELS } from '../../utils/builderUtils';
 
 const COMPONENT_ICONS: Record<string, React.ReactNode> = {
-  section: <Layout size={14} />,
-  div: <Square size={14} />,
-  heading: <Type size={14} />,
-  paragraph: <AlignLeft size={14} />,
-  button: <MousePointer size={14} />,
-  image: <Image size={14} />,
-  link: <Link size={14} />,
-  navbar: <Layout size={14} />,
-  hero: <Layout size={14} />,
-  card: <Square size={14} />,
-  grid: <Grid size={14} />,
-  columns: <Columns size={14} />,
-  form: <FileText size={14} />,
-  input: <FileText size={14} />,
-  textarea: <AlignLeft size={14} />,
-  video: <Image size={14} />,
-  divider: <Minus size={14} />,
-  spacer: <Move size={14} />,
-  icon: <Star size={14} />,
-  list: <AlignLeft size={14} />,
-  listItem: <AlignLeft size={14} />,
+  section: <Layout size={25} />,
+  div: <Square size={25} />,
+  heading: <Type size={25} />,
+  paragraph: <AlignLeft size={25} />,
+  button: <MousePointer size={25} />,
+  image: <Image size={25} />,
+  link: <Link size={25} />,
+  navbar: <Layout size={25} />,
+  hero: <Layout size={25} />,
+  card: <Square size={25} />,
+  grid: <Grid size={25} />,
+  columns: <Columns size={25} />,
+  form: <FileText size={25} />,
+  input: <FileText size={25} />,
+  textarea: <AlignLeft size={25} />,
+  video: <Image size={25} />,
+  divider: <Minus size={25} />,
+  spacer: <Move size={25} />,
+  icon: <Star size={25} />,
+  list: <AlignLeft size={25} />,
+  listItem: <AlignLeft size={25} />,
 };
 
 export const LeftPanel: React.FC = () => {
   const { leftPanelTab, setLeftPanelTab } = useBuilderStore();
 
   return (
-    <div className="w-64 bg-[#111827] flex flex-col border-r border-gray-800 h-full">
+    <div className="w-64 bg-[#111114] overflow-auto flex flex-col border-r border-gray-800 h-full">
       {/* Tab bar */}
       <div className="flex border-b border-gray-800">
         {[
@@ -48,7 +48,7 @@ export const LeftPanel: React.FC = () => {
             onClick={() => setLeftPanelTab(tab.id)}
             className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium transition-colors ${
               leftPanelTab === tab.id
-                ? 'text-white border-b-2 border-blue-500 bg-blue-500/5'
+                ? 'text-white border-b-2 border-blue-300 bg-blue-300/5'
                 : 'text-gray-400 hover:text-gray-200'
             }`}
           >
@@ -136,13 +136,13 @@ const ComponentsTab: React.FC = () => {
                   onDragStart={e => handleDragStart(e, type)}
                   onDragEnd={handleDragEnd}
                   onDoubleClick={() => handleDoubleClick(type)}
-                  className="flex items-center gap-2 bg-gray-800/60 hover:bg-gray-700/80 border border-gray-700/50 hover:border-gray-600 rounded-lg px-2.5 py-2 cursor-grab active:cursor-grabbing transition-all group"
+                  className="flex flex-col items-center gap-2 bg-gray-800/60 hover:bg-gray-700/80 border border-gray-700/50 hover:border-gray-600 rounded-lg px-2.5 py-2 cursor-grab active:cursor-grabbing transition-all group"
                   title={`Double-click to add, drag to place`}
                 >
-                  <span className="text-gray-400 group-hover:text-blue-400 transition-colors shrink-0">
+                  <span className="text-gray-400 group-hover:text-blue-300 transition-colors shrink-0">
                     {COMPONENT_ICONS[type] || <Square size={14} />}
                   </span>
-                  <span className="text-xs text-gray-300 group-hover:text-white transition-colors truncate">
+                  <span className="text-[10px] text-gray-300 group-hover:text-white transition-colors truncate">
                     {COMPONENT_LABELS[type]}
                   </span>
                 </div>
