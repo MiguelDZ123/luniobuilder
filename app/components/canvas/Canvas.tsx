@@ -117,7 +117,7 @@ export const Canvas: React.FC = () => {
                 </svg>
               </div>
               <p className="text-lg font-medium text-gray-500">Start building</p>
-              <p className="text-sm text-gray-400 mt-1">Drag components from the left panel</p>
+              <p className="text-sm text-gray-400 mt-1">Double click components from the left panel</p>
             </div>
           )}
         </div>

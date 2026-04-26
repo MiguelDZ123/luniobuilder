@@ -9,7 +9,14 @@ const page = () => {
         <div className='flex'>
           <img src="/logobuilder.png" alt="LUNIO Builder Logo" className='h-10 w-full' />
         </div>
-        <div className='flex'>
+        <div className='flex items-center gap-6'>
+          <nav>
+            <ul className='flex gap-6'>
+              <li><Link href="/features" className='text-gray-400 hover:text-gray-300 transition-colors'>Community</Link></li>
+              <li><Link href="/pricing" className='text-gray-400 hover:text-gray-300 transition-colors'>Pricing</Link></li>
+              <li><Link href="/docs" className='text-gray-400 hover:text-gray-300 transition-colors'>Documentation</Link></li>
+            </ul>
+          </nav>
           <User size={30} className='text-gray-400 border rounded-full p-1' />
         </div>
       </div>

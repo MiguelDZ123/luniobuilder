@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutGrid as Layout, Type, Image, MousePointer, Square, Columns2 as Columns, Grid2x2 as Grid, AlignLeft, Link, Star, Minus, Move, FileText, ChevronRight, ChevronDown, Eye, EyeOff, Lock, Unlock, Trash2, Copy, Plus, Layers, Package, Globe, Monitor } from 'lucide-react';
+import { LayoutGrid as Layout, Type, Image, MousePointer, Square, Columns2 as Columns, Grid2x2 as Grid, AlignLeft, Link, Star, Minus, Move, FileText, ChevronRight, ChevronDown, Eye, EyeOff, Lock, Unlock, Trash2, Copy, Plus, Layers, Package, Globe, Monitor, Play, Form, List, ListEnd, Laptop, LayoutIcon, LayoutPanelTop, IdCard, TextInitialIcon } from 'lucide-react';
 import { DndContext, DragEndEvent, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -11,25 +11,25 @@ const COMPONENT_ICONS: Record<string, React.ReactNode> = {
   section: <Layout size={25} />,
   div: <Square size={25} />,
   heading: <Type size={25} />,
-  paragraph: <AlignLeft size={25} />,
+  paragraph: <TextInitialIcon size={25} />,
   button: <MousePointer size={25} />,
   image: <Image size={25} />,
   link: <Link size={25} />,
-  navbar: <Layout size={25} />,
-  hero: <Layout size={25} />,
-  card: <Square size={25} />,
+  navbar: <LayoutPanelTop size={25} />,
+  hero: <LayoutIcon size={25} />,
+  card: <IdCard size={25} />,
   grid: <Grid size={25} />,
   columns: <Columns size={25} />,
-  form: <FileText size={25} />,
+  form: <Form size={25} />,
   input: <FileText size={25} />,
   textarea: <AlignLeft size={25} />,
-  video: <Image size={25} />,
+  video: <Play size={25} />,
   divider: <Minus size={25} />,
   spacer: <Move size={25} />,
   icon: <Star size={25} />,
-  list: <AlignLeft size={25} />,
-  listItem: <AlignLeft size={25} />,
-  iframe: <Monitor size={25} />
+  list: <List size={25} />,
+  listItem: <ListEnd size={25} />,
+  iframe: <Laptop size={25} />
 };
 
 export const LeftPanel: React.FC = () => {

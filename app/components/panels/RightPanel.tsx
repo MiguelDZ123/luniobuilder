@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import ColorPicker from 'react-best-gradient-color-picker'
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useBuilderStore } from '../../stores/builderStore';
 import { StyleProperties } from '../../types/builder';
@@ -22,11 +21,10 @@ export const RightPanel: React.FC = () => {
               <button
                 key={tab}
                 onClick={() => setRightPanelTab(tab)}
-                className={`flex-1 py-3 text-xs font-medium capitalize transition-colors ${
-                  rightPanelTab === tab
+                className={`flex-1 py-3 text-xs font-medium capitalize transition-colors ${rightPanelTab === tab
                     ? 'text-white border-b-2 border-blue-300 bg-blue-300/5'
                     : 'text-gray-400 hover:text-gray-200'
-                }`}
+                  }`}
               >
                 {tab}
               </button>
@@ -215,10 +213,10 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ element, breakpoint }) => {
   };
 
   const getSpacing = (prefix: 'margin' | 'padding') => ({
-    top: parsePx((styles as Record<string, string>)[`${prefix}Top`] || (styles as Record<string, string>)[prefix]),
-    right: parsePx((styles as Record<string, string>)[`${prefix}Right`] || (styles as Record<string, string>)[prefix]),
-    bottom: parsePx((styles as Record<string, string>)[`${prefix}Bottom`] || (styles as Record<string, string>)[prefix]),
-    left: parsePx((styles as Record<string, string>)[`${prefix}Left`] || (styles as Record<string, string>)[prefix]),
+    top: parsePx((styles as unknown as Record<string, string>)[`${prefix}Top`] || (styles as unknown as Record<string, string>)[prefix]),
+    right: parsePx((styles as unknown as Record<string, string>)[`${prefix}Right`] || (styles as unknown as Record<string, string>)[prefix]),
+    bottom: parsePx((styles as unknown as Record<string, string>)[`${prefix}Bottom`] || (styles as unknown as Record<string, string>)[prefix]),
+    left: parsePx((styles as unknown as Record<string, string>)[`${prefix}Left`] || (styles as unknown as Record<string, string>)[prefix]),
   });
 
   const handleSpacing = (prefix: 'margin' | 'padding', side: string, val: string) => {
@@ -264,7 +262,7 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ element, breakpoint }) => {
             />
             <InputRow label="Gap"
               value={styles.gap || ''}
-              onChange={v => update('gap', v)} 
+              onChange={v => update('gap', v)}
               placeholder="16px" />
           </>
         )}
@@ -292,16 +290,16 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ element, breakpoint }) => {
           options={['static', 'relative', 'absolute', 'fixed', 'sticky']}
         />
         {(styles.position === 'absolute' || styles.position === 'fixed') && (
-          <div className="grid grid-cols-2 gap-1 mt-1">
+          <div className="grid grid-cols-2 gap-2 mt-1">
             {(['top', 'right', 'bottom', 'left'] as const).map(side => (
-              <div key={side} className="flex items-center gap-1">
-                <span className="text-xs text-gray-600 w-6">{side[0].toUpperCase()}</span>
+              <div key={side} className="flex items-center">
+                <span className="text-xs text-gray-600 w-3">{side[0].toUpperCase()}</span>
                 <input
                   type="text"
-                  value={(styles as Record<string, string>)[side] || ''}
+                  value={(styles as unknown as Record<string, string>)[side] || ''}
                   onChange={e => update(side as keyof StyleProperties, e.target.value)}
                   placeholder="auto"
-                  className="flex-1 bg-gray-800 text-gray-200 text-xs rounded px-1.5 py-1 border border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="flex-1 w-full bg-gray-800 text-gray-200 text-xs rounded px-1.5 py-1 border border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
             ))}
@@ -311,7 +309,7 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ element, breakpoint }) => {
 
       {/* Size */}
       <Section title="Size">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2 mb-2">
           {[
             { label: 'W', key: 'width' as const },
             { label: 'H', key: 'height' as const },
@@ -324,7 +322,7 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ element, breakpoint }) => {
               <span className="text-xs text-gray-600 w-8 shrink-0">{label}</span>
               <input
                 type="text"
-                value={(styles as Record<string, string>)[key] || ''}
+                value={(styles as unknown as Record<string, string>)[key] || ''}
                 onChange={e => update(key, e.target.value)}
                 placeholder="auto"
                 className="flex-1 min-w-0 bg-gray-800 text-gray-200 text-xs rounded px-1.5 py-1 border border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -570,6 +568,19 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ element }) => {
             </div>
           )}
         </>
+      )}
+
+      {element.type === 'iframe' && (
+        <div>
+          <label className="text-xs text-gray-500 block mb-1">Iframe URL</label>
+          <input
+            type="text"
+            value={element.props.src || ''}
+            onChange={e => update('src', e.target.value)}
+            placeholder="https://..."
+            className="w-full bg-gray-800 text-gray-200 text-xs rounded-lg px-3 py-2 border border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
       )}
 
       {element.type === 'icon' && (
