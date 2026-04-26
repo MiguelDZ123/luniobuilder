@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import SignIn from './components/auth/googleSignIn'
-import { SignOut } from './components/auth/signOut'
 import UserAvatar from './components/auth/UserAvatar'
 
 const page = () => {
@@ -34,7 +33,6 @@ const page = () => {
               View Documentation
             </Link>
             <SignIn />
-            <SignOut />
           </div>
         </div>
         <div className='border-8 border-white/10 p-2 rounded-2xl'>
