@@ -10,10 +10,13 @@ import { useBuilderStore } from '../stores/builderStore';
 import { useSession } from "next-auth/react"
 import SignIn from '../components/auth/googleSignIn';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 export default function App() {
 
   const {
+    projectId,
+    loadProject,
     isPreviewMode,
     selectedElementId,
     getElementById,
@@ -26,8 +29,13 @@ export default function App() {
   } = useBuilderStore();
 
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; id: string } | null>(null);
+  const [projectLoading, setProjectLoading] = useState(false);
+  const [projectError, setProjectError] = useState<string | null>(null);
+  const [projectLoadedId, setProjectLoadedId] = useState<string | null>(null);
 
-  const { data: session } = useSession()
+  const searchParams = useSearchParams();
+  const projectQueryId = searchParams.get('projectId');
+  const { data: session } = useSession();
  
   // Keyboard shortcuts
   useEffect(() => {
@@ -80,6 +88,37 @@ export default function App() {
     return () => window.removeEventListener('contextmenu', handleContextMenu);
   }, []);
 
+  useEffect(() => {
+    const loadProjectFromServer = async () => {
+      if (!projectQueryId || !session || projectLoadedId === projectQueryId) {
+        return;
+      }
+
+      setProjectLoading(true);
+      setProjectError(null);
+
+      const response = await fetch(`/api/projects?projectId=${projectQueryId}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setProjectError(data?.error || 'Unable to load project');
+        setProjectLoading(false);
+        return;
+      }
+
+      if (data?.content?.pages && data?.content?.currentPageId) {
+        loadProject(data.id, data.content.pages, data.content.currentPageId);
+        setProjectLoadedId(projectQueryId);
+      } else {
+        setProjectError('Project content is malformed');
+      }
+
+      setProjectLoading(false);
+    };
+
+    loadProjectFromServer();
+  }, [projectQueryId, session, projectLoadedId, loadProject]);
+
   const contextElement = contextMenu ? getElementById(contextMenu.id) : null;
 
   if (!session) {
@@ -89,6 +128,29 @@ export default function App() {
           Back
         </Link>
       </div>;
+  }
+
+  if (!projectQueryId) {
+    return (
+      <div className='bg-[#0d1117] min-h-screen flex flex-col items-center justify-center gap-6 px-6 text-white'>
+        <h1 className='text-3xl font-semibold'>Select a project from your dashboard</h1>
+        <p className='text-gray-400 max-w-lg text-center'>Your editor is ready, but to save and load projects you need to open a project through the dashboard.</p>
+        <Link href='/dashboard' className='rounded-full bg-linear-to-r from-[#1D976C] to-[#93F9B9] px-6 py-3 text-sm font-semibold text-black'>Go to Dashboard</Link>
+      </div>
+    );
+  }
+
+  if (projectLoading) {
+    return <div className='bg-[#0d1117] w-full min-h-screen flex items-center justify-center text-white'>Loading project...</div>;
+  }
+
+  if (projectError) {
+    return (
+      <div className='bg-[#0d1117] w-full min-h-screen flex flex-col items-center justify-center gap-4 text-white p-6'>
+        <p className='text-red-300'>{projectError}</p>
+        <Link href='/dashboard' className='rounded-full bg-linear-to-r from-[#1D976C] to-[#93F9B9] px-6 py-3 text-sm font-semibold text-black'>Back to Dashboard</Link>
+      </div>
+    );
   }
 
   return (

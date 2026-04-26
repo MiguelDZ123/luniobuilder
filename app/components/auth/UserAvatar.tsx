@@ -9,6 +9,7 @@ import {
     PopoverTitle,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import Link from "next/link"
 
 export default async function UserAvatar() {
     const session = await auth()
@@ -25,15 +26,17 @@ export default async function UserAvatar() {
                         <PopoverTrigger asChild>
                             <img src={session.user.image} className="w-10 rounded-full border-3 border-white/20" alt="User Avatar" />
                         </PopoverTrigger>
-                        <PopoverContent className="bg-[#0d1117] text-white border-[#21262d]">
-                            <PopoverHeader>
-                                <img src={session.user.image} className="w-12 rounded-full border-3 border-white/20" alt="User Avatar" />
-                                <div className="ml-4">
+                        <PopoverContent className="bg-[#0d1117] text-white border border-white/20">
+                            <PopoverHeader className="ml-4 gap-2 flex flex-col">
+                                <div>
                                     <p className="text-sm font-medium">{session.user.name}</p>
                                     <p className="text-xs text-gray-400">{session.user.email}</p>
                                 </div>
+                                 <Link href="/dashboard" className="">
+                                    Dashboard
+                                </Link>
+                                <SignOut />
                             </PopoverHeader>
-                            <SignOut />
                         </PopoverContent>
                     </Popover>
                 </>

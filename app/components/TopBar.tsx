@@ -2,14 +2,19 @@ import React, { useState } from 'react';
 import {
   Monitor, Tablet, Smartphone, Undo2, Redo2, Eye, EyeOff,
   ZoomIn, ZoomOut, Download, Upload, Share2, Settings,
-  ChevronDown, Play
+  ChevronDown, Play, Save
 } from 'lucide-react';
 import { useBuilderStore } from '../stores/builderStore';
 import { renderElementToHtml, renderElementToReactString } from '../utils/builderUtils';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export const TopBar: React.FC = () => {
   const {
+    projectId,
+    setProjectId,
+    pages,
+    currentPageId,
     breakpoint,
     setBreakpoint,
     canvasScale,
@@ -26,8 +31,11 @@ export const TopBar: React.FC = () => {
     duplicateElement,
   } = useBuilderStore();
 
+  const router = useRouter();
   const [showPublishMenu, setShowPublishMenu] = useState(false);
   const [published, setPublished] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
   const page = getCurrentPage();
 
   const canUndo = historyIndex > 0;
@@ -37,6 +45,51 @@ export const TopBar: React.FC = () => {
     setPublished(true);
     setShowPublishMenu(false);
     setTimeout(() => setPublished(false), 3000);
+  };
+
+  const saveProject = async () => {
+    if (isSaving) return;
+    setSaveMessage('');
+    setIsSaving(true);
+
+    const payload = {
+      projectId,
+      title: page.name,
+      slug: page.slug || '/untitled',
+      content: {
+        pages,
+        currentPageId,
+      },
+    };
+
+    try {
+      const response = await fetch('/api/projects', {
+        method: projectId ? 'PATCH' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || 'Unable to save project');
+      }
+
+      if (data?.id) {
+        setProjectId(data.id);
+        if (!projectId) {
+          router.replace(`/editor?projectId=${data.id}`);
+        }
+      }
+      setSaveMessage('Saved successfully');
+    } catch (error) {
+      console.error(error);
+      setSaveMessage('Failed to save');
+    } finally {
+      setIsSaving(false);
+      setTimeout(() => setSaveMessage(''), 2500);
+    }
   };
 
   const zoomIn = () => setCanvasScale(Math.min(canvasScale + 0.1, 2));
@@ -202,6 +255,19 @@ export default App;
         >
           {isPreviewMode ? <EyeOff size={13} /> : <Eye size={13} />}
           {isPreviewMode ? 'Edit' : 'Preview'}
+        </button>
+
+        <button
+          onClick={saveProject}
+          disabled={isSaving}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${projectId
+            ? 'bg-green-600 text-white hover:bg-green-500'
+            : 'bg-gray-700 text-gray-300 cursor-not-allowed'
+            }`}
+          title={projectId ? 'Save Project' : 'Create project from Dashboard first'}
+        >
+          <Save size={13} />
+          {isSaving ? 'Saving...' : 'Save'}
         </button>
 
         {/* Publish */}

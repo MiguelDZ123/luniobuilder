@@ -4,6 +4,11 @@ import { generateId, createDefaultElement, deepClone } from '../utils/builderUti
 import { createStarterPage } from '../utils/starterTemplate';
 
 interface BuilderStore extends BuilderState {
+  // Auth/project tracking
+  projectId: string | null;
+  setProjectId: (id: string | null) => void;
+  loadProject: (projectId: string | null, pages: Page[], currentPageId: string) => void;
+
   // Element selection
   selectElement: (id: string | null) => void;
   hoverElement: (id: string | null) => void;
@@ -63,6 +68,7 @@ const defaultPage: Page = {
 
 export const useBuilderStore = create<BuilderStore>((set, get) => ({
   pages: [defaultPage],
+  projectId: null,
   currentPageId: 'page-1',
   selectedElementId: null,
   hoveredElementId: null,
@@ -77,6 +83,18 @@ export const useBuilderStore = create<BuilderStore>((set, get) => ({
   history: [[defaultPage]],
   historyIndex: 0,
   isPreviewMode: false,
+
+  setProjectId: (id) => set({ projectId: id }),
+  loadProject: (projectId, pages, currentPageId) => set({
+    projectId,
+    pages,
+    currentPageId,
+    selectedElementId: null,
+    hoveredElementId: null,
+    history: [deepClone(pages)],
+    historyIndex: 0,
+    isPreviewMode: false,
+  }),
 
   selectElement: (id) => set({ selectedElementId: id }),
   hoverElement: (id) => set({ hoveredElementId: id }),
