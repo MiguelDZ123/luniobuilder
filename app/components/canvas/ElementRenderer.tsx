@@ -46,6 +46,13 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, isPre
     overflowWrap: 'break-word',
     wordBreak: 'break-word',
   };
+  const editingInputStyles: React.CSSProperties = {
+    ...safeTextStyles,
+    ...cssStyles,
+    display: 'inline-flex',
+    width: cssStyles.width || 'auto',
+    minWidth: 0,
+  };
 
   if (element.hidden && !isPreview) {
     return (
@@ -195,8 +202,8 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, isPre
             onChange={e => setEditingValue(e.target.value)}
             onBlur={commitTextEdit}
             onKeyDown={handleEditKeyDown}
-            style={{ ...cssStyles, width: cssStyles.width }}
-            className=" outline-none"
+            style={editingInputStyles}
+            className="outline-none"
           />
         ) : (
           <Tag
@@ -218,7 +225,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, isPre
             onChange={e => setEditingValue(e.target.value)}
             onBlur={commitTextEdit}
             onKeyDown={handleEditKeyDown}
-            style={{ ...cssStyles, width: '100%' }}
+            style={{ ...editingInputStyles, display: 'block', width: '100%' }}
             className="border border-blue-300 focus:ring-2 focus:ring-blue-400 rounded px-2 py-1"
           />
         ) : (
@@ -240,8 +247,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, isPre
             onChange={e => setEditingValue(e.target.value)}
             onBlur={commitTextEdit}
             onKeyDown={handleEditKeyDown}
-            //Dont alter button width when editing text
-            style={{ ...cssStyles, width: cssStyles.width }}
+            style={editingInputStyles}
             className="border outline-none border-blue-300 focus:ring-blue-400 rounded px-2 py-1"
           />
         ) : (
@@ -263,7 +269,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, isPre
             onChange={e => setEditingValue(e.target.value)}
             onBlur={commitTextEdit}
             onKeyDown={handleEditKeyDown}
-            style={{ ...cssStyles, width: '100%' }}
+            style={{ ...editingInputStyles, width: 'auto' }}
             className="border border-blue-300 focus:ring-2 focus:ring-blue-400 rounded px-2 py-1"
           />
         ) : (
@@ -371,7 +377,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, isPre
             onChange={e => setEditingValue(e.target.value)}
             onBlur={commitTextEdit}
             onKeyDown={handleEditKeyDown}
-            style={{ ...safeTextStyles, width: '100%' }}
+            style={{ ...editingInputStyles, width: 'auto' }}
             className="border border-blue-300 focus:ring-2 focus:ring-blue-400 rounded px-2 py-1"
           />
         ) : (
