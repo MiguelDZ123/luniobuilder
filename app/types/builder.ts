@@ -32,7 +32,6 @@ export interface StyleProperties {
   gap?: string;
   gridTemplateColumns?: string;
   gridTemplateRows?: string;
-  title?: string;
 
   // Spacing
   padding?: string;
