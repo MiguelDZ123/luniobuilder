@@ -6,18 +6,15 @@ import { ElementType } from '../../types/builder';
 export const Canvas: React.FC = () => {
   const {
     getCurrentPage,
-    selectedElementId,
     breakpoint,
     canvasScale,
     isPreviewMode,
     selectElement,
     addElementFromPalette,
-    draggedElementType,
     setDropTarget,
     setDraggedElementId,
     setDraggedElementType,
     dropTargetId,
-    dropPosition,
     moveElement,
   } = useBuilderStore();
 
