@@ -8,7 +8,6 @@ import { Canvas } from '../components/canvas/Canvas';
 import { ContextMenu } from '../components/ContextMenu';
 import { useBuilderStore } from '../stores/builderStore';
 import { useSession } from "next-auth/react"
-import SignIn from '../components/auth/googleSignIn';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
