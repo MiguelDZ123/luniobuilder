@@ -305,7 +305,6 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, isPre
           <iframe
             src={element.props.src}
             style={{ ...safeCssStyles, width: '100%', height: '100%', border: 'none' }}
-            title={element.props.title || 'iframe'}
             onClick={handleClick}
           />
         );
