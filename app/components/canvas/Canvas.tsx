@@ -81,7 +81,7 @@ export const Canvas: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 overflow-auto bg-[#111114] flex flex-col items-center py-8">
+    <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] bg-[#111114] flex flex-col items-center py-8">
       {/* Canvas wrapper with scale */}
       <div
         style={{

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import { Copy, Trash2, Eye, EyeOff, Lock, Unlock, ArrowUp, ArrowDown, ChevronUp, ChevronDown } from 'lucide-react';
+import { Copy, Trash2, Eye, EyeOff, Lock, Unlock } from 'lucide-react';
 
 interface ContextMenuProps {
   x: number;

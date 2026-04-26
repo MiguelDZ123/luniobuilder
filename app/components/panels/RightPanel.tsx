@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ColorPicker from 'react-best-gradient-color-picker'
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useBuilderStore } from '../../stores/builderStore';
 import { StyleProperties } from '../../types/builder';
@@ -90,7 +91,7 @@ interface InputRowProps {
 
 const InputRow: React.FC<InputRowProps> = ({ label, value, onChange, type = 'text', placeholder, unit, options }) => {
   return (
-    <div className="flex items-center gap-2 mb-2">
+    <div className="flex w-full items-center gap-2 mb-2">
       <span className="text-xs text-gray-500 w-20 shrink-0">{label}</span>
       {options ? (
         <select
@@ -102,7 +103,7 @@ const InputRow: React.FC<InputRowProps> = ({ label, value, onChange, type = 'tex
           {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
       ) : (
-        <div className="flex-1 flex items-center gap-1">
+        <>
           <input
             type={type}
             value={value}
@@ -111,7 +112,7 @@ const InputRow: React.FC<InputRowProps> = ({ label, value, onChange, type = 'tex
             className="flex-1 bg-gray-800 text-gray-200 text-xs rounded-md px-2 py-1.5 border border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500 min-w-0"
           />
           {unit && <span className="text-xs text-gray-600">{unit}</span>}
-        </div>
+        </>
       )}
     </div>
   );
@@ -127,7 +128,7 @@ const ColorInput: React.FC<ColorInputProps> = ({ label, value, onChange }) => {
   return (
     <div className="flex items-center gap-2 mb-2">
       <span className="text-xs text-gray-500 w-20 shrink-0">{label}</span>
-      <div className="flex-1 flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5">
+      <div className="flex-1 w-10 flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5">
         <input
           type="color"
           value={value || '#000000'}
@@ -174,7 +175,7 @@ const SpacingInput: React.FC<SpacingInputProps> = ({ label, values, onChange }) 
           onClick={() => setLinked(!linked)}
           className={`text-xs px-1.5 py-0.5 rounded ${linked ? 'bg-blue-600/30 text-blue-400' : 'text-gray-600 hover:text-gray-400'}`}
         >
-          {linked ? '⛓' : '⛓️‍💥'}
+          {linked ? '⛓️' : '⛓️'}
         </button>
       </div>
       <div className="grid grid-cols-4 gap-1">
@@ -226,7 +227,7 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ element, breakpoint }) => {
   };
 
   return (
-    <div className='flex flex-col w-full'>
+    <div className='flex flex-col'>
       {/* Layout */}
       <Section title="Layout">
         <InputRow

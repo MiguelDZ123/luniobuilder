@@ -152,7 +152,7 @@ export const getElementDefaults = (type: ElementType): ElementDefaults => {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          width: '100%',
+          width: 'screen',
           minHeight: '600px',
           padding: '100px 40px',
           backgroundColor: '#f8fafc',
@@ -316,6 +316,16 @@ export const getElementDefaults = (type: ElementType): ElementDefaults => {
           cursor: 'pointer',
         },
       };
+    case 'iframe':
+      return {
+        name: 'Iframe',
+        props: { src: 'https://www.w3schools.com' },
+        styles: {
+          width: '100%',
+          height: '100%',
+          border: 'none',
+        },
+      };
     default:
       return {
         name: type,
@@ -439,6 +449,8 @@ const renderElementToReact = (element: BuilderElement, indent = 2): string => {
       return `${indentation}<span${attrs}>${iconName}</span>`;
     case 'listItem':
       return `${indentation}<li${attrs}>${text}</li>`;
+      case 'iframe':
+        return `${indentation}<iframe src="${src}"${attrs}></iframe>`;
     default:
       return `${indentation}<div${attrs}>${children}</div>`;
   }
@@ -506,6 +518,8 @@ export const renderElementToHtml = (element: BuilderElement): string => {
       return `<span${attrs}>${iconName}</span>`;
     case 'listItem':
       return `<li${attrs}>${text}</li>`;
+    case 'iframe':
+      return `<iframe src="${src}"${attrs}></iframe>`;
     default:
       return `<div${attrs}>${renderChildren()}</div>`;
   }
@@ -520,7 +534,7 @@ export const canHaveChildren = (type: ElementType): boolean => {
 export const COMPONENT_CATEGORIES = {
   Layout: ['section', 'div', 'hero', 'navbar', 'columns', 'grid', 'card'],
   Typography: ['heading', 'paragraph', 'link', 'list', 'listItem'],
-  Media: ['image', 'video', 'icon'],
+  Media: ['image', 'video', 'icon', 'iframe'],
   Forms: ['form', 'input', 'textarea', 'button'],
   Misc: ['divider', 'spacer'],
 } as const;
@@ -547,6 +561,7 @@ export const COMPONENT_LABELS: Record<ElementType, string> = {
   icon: 'Icon',
   list: 'List',
   listItem: 'List Item',
+  iframe: 'Iframe',
 };
 
 export { emptyStyles };

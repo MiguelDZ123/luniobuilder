@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { LayoutGrid as Layout, Type, Image, MousePointer, Square, Columns2 as Columns, Grid2x2 as Grid, AlignLeft, Link, Star, Minus, Move, FileText, ChevronRight, ChevronDown, Eye, EyeOff, Lock, Unlock, Trash2, Copy, Plus, Layers, Package, Globe } from 'lucide-react';
+import { LayoutGrid as Layout, Type, Image, MousePointer, Square, Columns2 as Columns, Grid2x2 as Grid, AlignLeft, Link, Star, Minus, Move, FileText, ChevronRight, ChevronDown, Eye, EyeOff, Lock, Unlock, Trash2, Copy, Plus, Layers, Package, Globe, Monitor } from 'lucide-react';
 import { DndContext, DragEndEvent, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
-import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable/dist';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useBuilderStore } from '../../stores/builderStore';
 import { ElementType, BuilderElement, Page } from '../../types/builder';
@@ -29,6 +29,7 @@ const COMPONENT_ICONS: Record<string, React.ReactNode> = {
   icon: <Star size={25} />,
   list: <AlignLeft size={25} />,
   listItem: <AlignLeft size={25} />,
+  iframe: <Monitor size={25} />
 };
 
 export const LeftPanel: React.FC = () => {
@@ -221,8 +222,6 @@ const LayerItem: React.FC<{ element: BuilderElement; depth: number }> = ({ eleme
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={isDragging ? 'opacity-50' : ''}
-      {...attributes}
-      {...listeners}
     >
       <div
         className={`flex items-center gap-1 px-2 py-1.5 rounded-md mx-1 group transition-colors ${
@@ -243,6 +242,8 @@ const LayerItem: React.FC<{ element: BuilderElement; depth: number }> = ({ eleme
         )}
 
         <button
+          {...attributes}
+          {...listeners}
           onClick={e => e.stopPropagation()}
           className="text-gray-500 hover:text-gray-300 shrink-0 p-0.5 rounded cursor-grab active:cursor-grabbing"
           title="Drag to reorder"

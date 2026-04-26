@@ -19,7 +19,8 @@ export type ElementType =
   | 'spacer'
   | 'icon'
   | 'list'
-  | 'listItem';
+  | 'listItem'
+  | 'iframe';
 
 export interface StyleProperties {
   // Layout

@@ -56,7 +56,7 @@ export const TopBar: React.FC = () => {
   <title>${page.seo.title}</title>
   <meta name="description" content="${page.seo.description}">
 </head>
-<body style="width:100%;margin:0;padding:0;font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+<body style="width:screen;margin:0;padding:0;font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
   ${bodyContent}
 </body>
 </html>`;
