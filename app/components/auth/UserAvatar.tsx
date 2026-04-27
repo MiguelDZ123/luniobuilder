@@ -4,9 +4,7 @@ import { SignOut } from "./signOut"
 import {
     Popover,
     PopoverContent,
-    PopoverDescription,
     PopoverHeader,
-    PopoverTitle,
     PopoverTrigger,
 } from "@/components/ui/popover"
 import Link from "next/link"
