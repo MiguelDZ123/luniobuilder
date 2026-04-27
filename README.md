@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+# LUNIO Drag & Drop Website Builder
 
-First, run the development server:
+LUNIO Builder is a NO-CODE website builder that allows you to create stunning websites with ease. With its intuitive drag-and-drop interface, you can design and publish your website in minutes, without any coding knowledge.
+
+
+## Screenshots
+
+![App Screenshot](https://i.ibb.co/k6HBmX0h/screen.png)
+![App Screenshot](https://i.ibb.co/1fTKCss8/crop.png)
+
+
+## Demo
+
+https://luniobuilder.vercel.app/
+
+
+## Environment Variables
+
+To run this project, you will need to add the following environment variables to your .env file
+
+`AUTH_SECRET`
+
+`AUTH_GOOGLE_ID`
+
+`AUTH_GOOGLE_SECRET`
+
+`SUPABASE_URL`
+ 
+ `SUPABASE_SERVICE_ROLE_KEY`
+
+
+## Run Locally
+
+Clone the project
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+  git clone https://github.com/MiguelDZ123/luniobuilder.git
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Go to the project directory
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+  cd my-project
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Install dependencies
 
-## Learn More
+```bash
+  npm install
+```
 
-To learn more about Next.js, take a look at the following resources:
+Start the server
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+  npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Features
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Next-Auth
+- NextJS/Tailwind
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Contributing
+
+Contributions are always welcome!
+
+See `contributing.md` for ways to get started.
+
+Please adhere to this project's `code of conduct`.
+
+
+## Support
+
+For support, contact us via https://www.luniostudios.com/.
+
+
+## Authors
+
+- [@LUNIO Studios](https://github.com/luniostudios)
+
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)
+
