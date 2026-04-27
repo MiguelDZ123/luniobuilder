@@ -12,7 +12,7 @@ export const RightPanel: React.FC = () => {
   const page = getCurrentPage();
 
   return (
-    <div className="w-64 bg-[#111114] border-l border-gray-800 flex flex-col h-full">
+    <div className="w-64 bg-[#111114] max-md:hidden border-l border-gray-800 flex flex-col h-full">
       {element ? (
         <>
           {/* Tabs */}

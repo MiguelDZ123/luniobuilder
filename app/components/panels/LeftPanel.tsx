@@ -36,7 +36,7 @@ export const LeftPanel: React.FC = () => {
   const { leftPanelTab, setLeftPanelTab } = useBuilderStore();
 
   return (
-    <div className="w-64 bg-[#111114] overflow-auto flex flex-col border-r border-gray-800 h-full">
+    <div className="w-64 bg-[#111114] max-md:hidden overflow-auto flex flex-col border-r border-gray-800 h-full">
       {/* Tab bar */}
       <div className="flex border-b border-gray-800">
         {[

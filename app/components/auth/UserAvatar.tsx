@@ -30,7 +30,7 @@ export default async function UserAvatar() {
                                     <p className="text-sm font-medium">{session.user.name}</p>
                                     <p className="text-xs text-gray-400 underline">{session.user.email}</p>
                                 </div>
-                                 <Link href="/dashboard" className="">
+                                 <Link href="/dashboard" className="mt-3">
                                     Dashboard
                                 </Link>
                                 <SignOut />
