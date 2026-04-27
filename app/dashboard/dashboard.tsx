@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [projects, setProjects] = useState<ProjectRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -88,6 +89,33 @@ export default function Dashboard() {
     router.push(`/editor?projectId=${data.id}`);
   };
 
+  const deleteProject = async (projectId: string) => {
+    if (!confirm('Delete this project? This action cannot be undone.')) {
+      return;
+    }
+
+    setDeletingProjectId(projectId);
+    setError(null);
+
+    const response = await fetch('/api/projects', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ projectId }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      setError(data?.error || 'Unable to delete project');
+      setDeletingProjectId(null);
+      return;
+    }
+
+    setProjects(prev => prev.filter(project => project.id !== projectId));
+    setDeletingProjectId(null);
+  };
+
   if (status === 'loading') {
     return <div className='min-h-screen bg-[#0d1117] text-white flex items-center justify-center'>Loading projects...</div>;
   }
@@ -131,15 +159,26 @@ export default function Dashboard() {
             </div>
           )}
           {projects.map(project => (
-            <Link key={project.id} href={`/editor?projectId=${project.id}`} className='group rounded-3xl border border-gray-800 bg-[#111214] p-6 transition hover:border-[#1D976C] hover:bg-[#14161c]'>
-              <div className='flex items-center justify-between gap-4'>
+            <div key={project.id} className='rounded-3xl border border-gray-800 bg-[#111214] p-6 transition hover:border-[#1D976C] hover:bg-[#14161c]'>
+              <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
                 <div>
                   <h3 className='text-2xl font-semibold'>{project.title}</h3>
                   <p className='mt-2 text-sm text-gray-400'>Last updated {new Date(project.updated_at).toLocaleString()}</p>
                 </div>
-                <span className='rounded-full bg-[#1D976C] px-3 py-1 text-xs font-semibold text-black'>Open</span>
+                <div className='flex flex-wrap items-center gap-3'>
+                  <Link href={`/editor?projectId=${project.id}`} className='rounded-full bg-[#1D976C] px-3 py-2 text-xs font-semibold text-black transition hover:opacity-90'>
+                    Open
+                  </Link>
+                  <button
+                    onClick={() => deleteProject(project.id)}
+                    disabled={deletingProjectId === project.id}
+                    className='rounded-full bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-60'
+                  >
+                    {deletingProjectId === project.id ? 'Deleting…' : 'Delete'}
+                  </button>
+                </div>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </div>

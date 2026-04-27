@@ -30,7 +30,7 @@ export default async function UserAvatar() {
                             <PopoverHeader className="ml-4 gap-2 flex flex-col">
                                 <div>
                                     <p className="text-sm font-medium">{session.user.name}</p>
-                                    <p className="text-xs text-gray-400">{session.user.email}</p>
+                                    <p className="text-xs text-gray-400 underline">{session.user.email}</p>
                                 </div>
                                  <Link href="/dashboard" className="">
                                     Dashboard
