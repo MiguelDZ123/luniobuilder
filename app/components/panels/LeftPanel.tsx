@@ -210,6 +210,7 @@ const LayerItem: React.FC<{ element: BuilderElement; depth: number }> = ({ eleme
     duplicateElement,
     toggleElementLock,
     toggleElementVisibility,
+    toggleElementComponent,
   } = useBuilderStore();
 
   const [isExpanded, setIsExpanded] = useState(true);
@@ -277,6 +278,13 @@ const LayerItem: React.FC<{ element: BuilderElement; depth: number }> = ({ eleme
             className="p-0.5 text-gray-500 hover:text-gray-200 rounded"
           >
             <Copy size={10} />
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); toggleElementComponent(element.id); }}
+            className={`p-0.5 rounded ${element.isComponent ? 'text-blue-300 hover:text-blue-100' : 'text-gray-500 hover:text-gray-200'}`}
+            title={element.isComponent ? 'Remove component tag' : 'Export as component'}
+          >
+            <Package size={10} />
           </button>
           <button
             onClick={e => { e.stopPropagation(); deleteElement(element.id); }}

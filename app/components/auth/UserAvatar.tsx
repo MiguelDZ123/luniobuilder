@@ -1,5 +1,5 @@
 import { User } from "lucide-react"
-import { auth } from "../../auth"
+import { auth } from "../../auth/auth"
 import { SignOut } from "./signOut"
 import {
     Popover,

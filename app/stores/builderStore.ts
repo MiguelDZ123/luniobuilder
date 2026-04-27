@@ -29,6 +29,7 @@ interface BuilderStore extends BuilderState {
   updateElementName: (id: string, name: string) => void;
   toggleElementLock: (id: string) => void;
   toggleElementVisibility: (id: string) => void;
+  toggleElementComponent: (id: string) => void;
 
   // Page management
   addPage: () => void;
@@ -381,6 +382,41 @@ export const useBuilderStore = create<BuilderStore>((set, get) => ({
       const updateEl = (elements: BuilderElement[]): boolean => {
         for (const el of elements) {
           if (el.id === id) { el.hidden = !el.hidden; return true; }
+          if (updateEl(el.children)) return true;
+        }
+        return false;
+      };
+      updateEl(page.elements);
+      return { pages };
+    });
+  },
+
+  toggleElementComponent: (id) => {
+    const makeComponentName = (name: string) => {
+      const words = String(name || 'Component')
+        .replace(/[^a-zA-Z0-9]+/g, ' ')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+      const base = words.map(word => word.charAt(0).toUpperCase() + word.slice(1).replace(/[^a-zA-Z0-9]/g, '')).join('') || 'Component';
+      return base;
+    };
+
+    set(state => {
+      const pages = deepClone(state.pages);
+      const page = pages.find(p => p.id === state.currentPageId)!;
+      const updateEl = (elements: BuilderElement[]): boolean => {
+        for (const el of elements) {
+          if (el.id === id) {
+            if (el.isComponent) {
+              el.isComponent = false;
+              el.componentName = undefined;
+            } else {
+              el.isComponent = true;
+              el.componentName = el.componentName || makeComponentName(el.name || 'Component');
+            }
+            return true;
+          }
           if (updateEl(el.children)) return true;
         }
         return false;

@@ -1,4 +1,4 @@
-import { auth } from "./auth";
+import { auth } from "./auth/auth";
  
 export const proxy = auth((req) => {
   if (!req.auth && req.nextUrl.pathname !== "/editor") {

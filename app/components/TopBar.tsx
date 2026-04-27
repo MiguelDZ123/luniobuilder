@@ -1,13 +1,128 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Monitor, Tablet, Smartphone, Undo2, Redo2, Eye, EyeOff,
   ZoomIn, ZoomOut, Download, Upload, Share2, Settings,
-  ChevronDown, Play, Save
+  ChevronDown, Play,
+  Check,
+  Loader
 } from 'lucide-react';
 import { useBuilderStore } from '../stores/builderStore';
-import { renderElementToHtml, renderElementToReactString } from '../utils/builderUtils';
+import {
+  renderElementToHtml,
+  generateReactProjectFiles,
+} from '../utils/builderUtils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+
+const textEncoder = new TextEncoder();
+const crc32Table = new Uint32Array(256);
+for (let n = 0; n < 256; n += 1) {
+  let c = n;
+  for (let k = 0; k < 8; k += 1) {
+    c = (c & 1) ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+  }
+  crc32Table[n] = c;
+}
+
+const makeCrc32 = (data: Uint8Array) => {
+  let crc = 0xffffffff;
+  for (let i = 0; i < data.length; i += 1) {
+    crc = (crc >>> 8) ^ crc32Table[(crc ^ data[i]) & 0xff];
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+};
+
+const makeDosDateTime = () => {
+  const now = new Date();
+  const date = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+  const time = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() / 2);
+  return { date, time };
+};
+
+const concatUint8Arrays = (arrays: Uint8Array[]) => {
+  const length = arrays.reduce((sum, current) => sum + current.length, 0);
+  const result = new Uint8Array(length);
+  let offset = 0;
+  arrays.forEach(chunk => {
+    result.set(chunk, offset);
+    offset += chunk.length;
+  });
+  return result;
+};
+
+const createZipBlob = (files: Array<{ path: string; content: string }>) => {
+  const chunks: Uint8Array[] = [];
+  const centralDirectory: Uint8Array[] = [];
+  let offset = 0;
+
+  const dosDateTime = makeDosDateTime();
+
+  files.forEach(file => {
+    const fileNameBytes = textEncoder.encode(file.path);
+    const fileData = textEncoder.encode(file.content);
+    const crc = makeCrc32(fileData);
+
+    const localHeader = new ArrayBuffer(30 + fileNameBytes.length);
+    const localView = new DataView(localHeader);
+    localView.setUint32(0, 0x04034b50, true);
+    localView.setUint16(4, 20, true);
+    localView.setUint16(6, 0, true);
+    localView.setUint16(8, 0, true);
+    localView.setUint16(10, dosDateTime.time, true);
+    localView.setUint16(12, dosDateTime.date, true);
+    localView.setUint32(14, crc, true);
+    localView.setUint32(18, fileData.length, true);
+    localView.setUint32(22, fileData.length, true);
+    localView.setUint16(26, fileNameBytes.length, true);
+    localView.setUint16(28, 0, true);
+    new Uint8Array(localHeader, 30).set(fileNameBytes);
+
+    chunks.push(new Uint8Array(localHeader));
+    chunks.push(fileData);
+
+    const centralHeader = new ArrayBuffer(46 + fileNameBytes.length);
+    const centralView = new DataView(centralHeader);
+    centralView.setUint32(0, 0x02014b50, true);
+    centralView.setUint16(4, 20, true);
+    centralView.setUint16(6, 20, true);
+    centralView.setUint16(8, 0, true);
+    centralView.setUint16(10, 0, true);
+    centralView.setUint16(12, dosDateTime.time, true);
+    centralView.setUint16(14, dosDateTime.date, true);
+    centralView.setUint32(16, crc, true);
+    centralView.setUint32(20, fileData.length, true);
+    centralView.setUint32(24, fileData.length, true);
+    centralView.setUint16(28, fileNameBytes.length, true);
+    centralView.setUint16(30, 0, true);
+    centralView.setUint16(32, 0, true);
+    centralView.setUint16(34, 0, true);
+    centralView.setUint16(36, 0, true);
+    centralView.setUint32(38, 0, true);
+    centralView.setUint32(42, offset, true);
+    new Uint8Array(centralHeader, 46).set(fileNameBytes);
+    centralDirectory.push(new Uint8Array(centralHeader));
+
+    offset += localHeader.byteLength + fileData.length;
+  });
+
+  const centralOffset = offset;
+  const centralSize = centralDirectory.reduce((total, chunk) => total + chunk.length, 0);
+  chunks.push(...centralDirectory);
+
+  const endHeader = new ArrayBuffer(22);
+  const endView = new DataView(endHeader);
+  endView.setUint32(0, 0x06054b50, true);
+  endView.setUint16(4, 0, true);
+  endView.setUint16(6, 0, true);
+  endView.setUint16(8, centralDirectory.length, true);
+  endView.setUint16(10, centralDirectory.length, true);
+  endView.setUint32(12, centralSize, true);
+  endView.setUint32(16, centralOffset, true);
+  endView.setUint16(20, 0, true);
+  chunks.push(new Uint8Array(endHeader));
+
+  return new Blob(chunks as any, { type: 'application/zip' });
+};
 
 export const TopBar: React.FC = () => {
   const {
@@ -34,23 +149,96 @@ export const TopBar: React.FC = () => {
   const router = useRouter();
   const [showPublishMenu, setShowPublishMenu] = useState(false);
   const [published, setPublished] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishMessage, setPublishMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+  const saveTimeoutRef = useRef<number | null>(null);
+  const isSavingRef = useRef(false);
+  const isInitialRender = useRef(true);
   const page = getCurrentPage();
 
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
 
-  const handlePublish = () => {
-    setPublished(true);
-    setShowPublishMenu(false);
-    setTimeout(() => setPublished(false), 3000);
+  const requestVercelToken = () => {
+    if (typeof window === 'undefined') return null;
+    const existingToken = window.localStorage.getItem('vercelToken');
+    if (existingToken) return existingToken;
+
+    const token = window.prompt(
+      'Enter your Vercel Personal Token (scopes: deployments.read, deployments.write, projects.read):'
+    );
+    if (!token) return null;
+    const trimmed = token.trim();
+    if (trimmed) {
+      window.localStorage.setItem('vercelToken', trimmed);
+      return trimmed;
+    }
+    return null;
   };
 
-  const saveProject = async () => {
-    if (isSaving) return;
+  const publishToVercel = async () => {
+    setPublishMessage('');
+    setShowPublishMenu(false);
+
+    const token = requestVercelToken();
+    if (!token) {
+      setPublishMessage('Vercel token required to publish.');
+      return;
+    }
+
+    const defaultName = page.name || 'luniobuilder-project';
+    const projectName = window.prompt('Vercel Project Name:', defaultName)?.trim() || defaultName;
+    const teamId = window.prompt('Vercel Team ID (optional):', '')?.trim() || undefined;
+
+    setIsPublishing(true);
+
+    try {
+      const response = await fetch('/api/vercel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token,
+          teamId,
+          projectName,
+          pages,
+        }),
+      });
+
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : {};
+      if (!response.ok) {
+        const errorMessage = typeof data?.error === 'string'
+          ? data.error
+          : data?.message || JSON.stringify(data) || 'Vercel deployment failed';
+        throw new Error(errorMessage);
+      }
+
+      setPublished(true);
+      setPublishMessage(data?.url ? `Published to ${data.url}` : 'Published successfully');
+      setTimeout(() => setPublished(false), 5000);
+    } catch (error) {
+      console.error(error);
+      const message = error instanceof Error ? error.message : JSON.stringify(error);
+      setPublishMessage(message || 'Publish failed. Check console for details.');
+    } finally {
+      setIsPublishing(false);
+      setTimeout(() => setPublishMessage(''), 5000);
+    }
+  };
+
+  const handlePublish = () => {
+    publishToVercel();
+  };
+
+  const saveProject = useCallback(async (autoSave = false) => {
+    if (isSavingRef.current) return;
     setSaveMessage('');
     setIsSaving(true);
+    isSavingRef.current = true;
 
     const payload = {
       projectId,
@@ -82,15 +270,45 @@ export const TopBar: React.FC = () => {
           router.replace(`/editor?projectId=${data.id}`);
         }
       }
-      setSaveMessage('Saved successfully');
+      setSaveMessage(autoSave ? 'Auto-saved successfully' : 'Saved successfully');
     } catch (error) {
       console.error(error);
       setSaveMessage('Failed to save');
     } finally {
       setIsSaving(false);
+      isSavingRef.current = false;
       setTimeout(() => setSaveMessage(''), 2500);
     }
-  };
+  }, [projectId, pages, currentPageId, page.name, page.slug, router, setProjectId]);
+
+  useEffect(() => {
+    isSavingRef.current = isSaving;
+  }, [isSaving]);
+
+  useEffect(() => {
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+      return;
+    }
+
+    if (!projectId) return;
+
+    if (saveTimeoutRef.current) {
+      window.clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = window.setTimeout(() => {
+      saveProject(true);
+      saveTimeoutRef.current = null;
+    }, 2000);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        window.clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+    };
+  }, [pages, currentPageId, projectId, saveProject]);
 
   const zoomIn = () => setCanvasScale(Math.min(canvasScale + 0.1, 2));
   const zoomOut = () => setCanvasScale(Math.max(canvasScale - 0.1, 0.25));
@@ -122,28 +340,15 @@ export const TopBar: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const exportReact = () => {
-    const page = getCurrentPage();
-    const bodyContent = page.elements.length
-      ? page.elements.map(renderElementToReactString).join('\n')
-      : "  <div style={{padding: '32px', fontFamily: 'system-ui, sans-serif', color: '#4b5563'}}>No content to export.</div>";
-
-    const component = `import React from 'react';
-
-const App = () => (
-  <>
-${bodyContent}
-  </>
-);
-
-export default App;
-`;
-    const blob = new Blob([component], { type: 'text/javascript' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${page.slug.replace('/', '') || 'App'}.jsx`;
-    a.click();
+  const exportReact = async () => {
+    const projectName = page.name || 'LUNIOProject';
+    const files = generateReactProjectFiles(pages, projectName);
+    const content = createZipBlob(files);
+    const url = URL.createObjectURL(content);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${projectName.replace(/\s+/g, '_') || 'lunio'}-react-export.zip`;
+    link.click();
     URL.revokeObjectURL(url);
   };
 
@@ -245,6 +450,12 @@ export default App;
           </div>
         )}
 
+        {publishMessage && (
+          <div className="mt-1 text-xs text-gray-300 max-w-xs whitespace-normal">
+            {publishMessage}
+          </div>
+        )}
+
         {/* Preview */}
         <button
           onClick={() => setPreviewMode(!isPreviewMode)}
@@ -258,7 +469,6 @@ export default App;
         </button>
 
         <button
-          onClick={saveProject}
           disabled={isSaving}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${projectId
             ? 'bg-green-600 text-white hover:bg-green-500'
@@ -266,21 +476,27 @@ export default App;
             }`}
           title={projectId ? 'Save Project' : 'Create project from Dashboard first'}
         >
-          <Save size={13} />
-          {isSaving ? 'Saving...' : 'Save'}
+          {isSaving ? <Loader size={13} /> : <Check size={13} />}
+          {isSaving ? 'Saving...' : 'Saved'}
         </button>
 
         {/* Publish */}
         <div className="relative">
-          <div className="flex">
+          <div className="flex items-center gap-2">
             <button
               onClick={handlePublish}
+              disabled={isPublishing}
               className={`flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-l-lg text-xs font-medium transition-all ${published
                 ? 'bg-green-600 text-white'
                 : 'bg-blue-600 hover:bg-blue-500 text-white'
-                }`}
+                } ${isPublishing ? 'opacity-70 cursor-wait' : ''}`}
             >
-              {published ? (
+              {isPublishing ? (
+                <>
+                  <Loader size={12} />
+                  Publishing...
+                </>
+              ) : published ? (
                 <>
                   <span className="w-1.5 h-1.5 rounded-full bg-green-300 animate-pulse" />
                   Published!
@@ -303,11 +519,11 @@ export default App;
           {showPublishMenu && (
             <div className="absolute top-full right-0 mt-1 w-48 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl py-2 z-50">
               <button
-                onClick={handlePublish}
+                onClick={publishToVercel}
                 className="w-full flex items-center gap-2 px-4 py-2 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
               >
                 <Share2 size={12} />
-                Publish to web
+                Publish to Vercel
               </button>
               <button
                 onClick={exportHTML}
@@ -322,13 +538,6 @@ export default App;
               >
                 <Download size={12} />
                 Export React
-              </button>
-              <button
-                onClick={() => setShowPublishMenu(false)}
-                className="w-full flex items-center gap-2 px-4 py-2 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
-              >
-                <Upload size={12} />
-                Import project
               </button>
               <div className="border-t border-gray-800 mt-1 pt-1">
                 <button

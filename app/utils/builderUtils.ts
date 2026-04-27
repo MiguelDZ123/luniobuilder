@@ -574,6 +574,301 @@ export const renderElementToHtml = (element: BuilderElement): string => {
   }
 };
 
+const toPascalCase = (text: string): string => {
+  const words = String(text || '')
+    .replace(/[^a-zA-Z0-9]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  const pascal = words
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).replace(/[^a-zA-Z0-9]/g, ''))
+    .join('');
+
+  return pascal || 'Component';
+};
+
+const toSafeFileName = (text: string): string => {
+  const fileName = String(text || '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .toLowerCase();
+  return fileName || 'page';
+};
+
+const getUniqueName = (baseName: string, usedNames: Set<string>): string => {
+  let nextName = baseName;
+  let counter = 1;
+  while (usedNames.has(nextName)) {
+    nextName = `${baseName}${counter}`;
+    counter += 1;
+  }
+  usedNames.add(nextName);
+  return nextName;
+};
+
+export const sanitizeComponentName = (name: string): string => {
+  return getUniqueName(toPascalCase(name), new Set());
+};
+
+export const getComponentElements = (pages: Page[]): BuilderElement[] => {
+  const components: BuilderElement[] = [];
+
+  const walk = (elements: BuilderElement[]) => {
+    for (const element of elements) {
+      if (element.isComponent) {
+        components.push(element);
+      }
+      if (element.children.length > 0) {
+        walk(element.children);
+      }
+    }
+  };
+
+  pages.forEach(page => walk(page.elements));
+  return components;
+};
+
+export const renderElementToReactWithComponents = (
+  element: BuilderElement,
+  componentMap: Map<string, string>,
+  indent = 2,
+  skipComponentTag = false
+): string => {
+  const indentation = ' '.repeat(indent);
+
+  if (!skipComponentTag && element.isComponent && componentMap.has(element.id)) {
+    return `${indentation}<${componentMap.get(element.id)} />`;
+  }
+
+  const style = element.styles.desktop || {};
+  const styleString = styleObjectToJsxString(style);
+  const attrs = styleString ? ` style={{${styleString}}}` : '';
+  const text = escapeJsxString(element.props.text as string || '');
+  const placeholder = escapeJsxString(element.props.placeholder as string || '');
+  const href = escapeJsxString(element.props.href as string || '#');
+  const src = escapeJsxString(element.props.src as string || '');
+  const alt = escapeJsxString(element.props.alt as string || '');
+  const iconName = escapeJsxString(element.props.iconName as string || '★');
+  const inputType = escapeJsxString(element.props.type as string || 'text');
+
+  const renderChildren = (): string => {
+    const childStrings = element.children.map(child => renderElementToReactWithComponents(child, componentMap, indent + 2));
+    return childStrings.length ? `\n${childStrings.join('\n')}\n${indentation}` : '';
+  };
+
+  const children = renderChildren();
+
+  switch (element.type) {
+    case 'section':
+      return `${indentation}<section${attrs}>${children}</section>`;
+    case 'navbar':
+      return `${indentation}<nav${attrs}>${children}</nav>`;
+    case 'form':
+      return `${indentation}<form${attrs}>${children}</form>`;
+    case 'list':
+      return `${indentation}<ul${attrs}>${children}</ul>`;
+    case 'columns':
+    case 'grid':
+    case 'hero':
+    case 'card':
+    case 'div':
+      return `${indentation}<div${attrs}>${children}</div>`;
+    case 'heading': {
+      const level = element.props.level || 1;
+      const tag = `h${Math.min(Math.max(level, 1), 6)}`;
+      return `${indentation}<${tag}${attrs}>${text}</${tag}>`;
+    }
+    case 'paragraph':
+      return `${indentation}<p${attrs}>${text}</p>`;
+    case 'button':
+      return `${indentation}<button type="button"${attrs}>${text}</button>`;
+    case 'link':
+      return `${indentation}<a href="${href}"${attrs}>${text}</a>`;
+    case 'image':
+      return `${indentation}<img src="${src}" alt="${alt}"${attrs} />`;
+    case 'video':
+      return `${indentation}<video controls src="${src}"${attrs}></video>`;
+    case 'divider':
+      return `${indentation}<hr${attrs} />`;
+    case 'spacer':
+      return `${indentation}<div${attrs}></div>`;
+    case 'input':
+      return `${indentation}<input type="${inputType}" placeholder="${placeholder}"${attrs} />`;
+    case 'textarea':
+      return `${indentation}<textarea placeholder="${placeholder}"${attrs}></textarea>`;
+    case 'icon':
+      return `${indentation}<span${attrs}>${iconName}</span>`;
+    case 'listItem':
+      return `${indentation}<li${attrs}>${text}</li>`;
+    case 'iframe':
+      return `${indentation}<iframe src="${src}"${attrs}></iframe>`;
+    default:
+      return `${indentation}<div${attrs}>${children}</div>`;
+  }
+};
+
+export const collectReactComponentDependencies = (
+  element: BuilderElement,
+  componentMap: Map<string, string>,
+  dependencies = new Set<string>()
+): Set<string> => {
+  if (element.isComponent && componentMap.has(element.id)) {
+    dependencies.add(componentMap.get(element.id)!);
+    return dependencies;
+  }
+
+  for (const child of element.children) {
+    collectReactComponentDependencies(child, componentMap, dependencies);
+  }
+  return dependencies;
+};
+
+export const collectReactDependenciesForPage = (
+  page: Page,
+  componentMap: Map<string, string>
+): Set<string> => {
+  const dependencies = new Set<string>();
+  page.elements.forEach(element => collectReactComponentDependencies(element, componentMap, dependencies));
+  return dependencies;
+};
+
+export const collectReactDependenciesForComponent = (
+  component: BuilderElement,
+  componentMap: Map<string, string>
+): Set<string> => {
+  const dependencies = new Set<string>();
+  component.children.forEach(child => collectReactComponentDependencies(child, componentMap, dependencies));
+  dependencies.delete(componentMap.get(component.id)!);
+  return dependencies;
+};
+
+export const getPageComponentName = (page: Page, usedNames: Set<string>) => {
+  return getUniqueName(toPascalCase(page.name || page.slug || 'Page'), usedNames);
+};
+
+export const getPageFileName = (page: Page, usedFiles: Set<string>) => {
+  const baseName = toSafeFileName(page.name || page.slug || 'page');
+  let nextName = baseName;
+  let counter = 1;
+  while (usedFiles.has(nextName)) {
+    nextName = `${baseName}-${counter}`;
+    counter += 1;
+  }
+  usedFiles.add(nextName);
+  return nextName;
+};
+
+export const generateReactProjectFiles = (pages: Page[], projectName: string) => {
+  const toPascalCaseName = (value: string) => {
+    const words = value
+      .replace(/[^a-zA-Z0-9]+/g, ' ')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    const pascal = words.map(word => word.charAt(0).toUpperCase() + word.slice(1).replace(/[^a-zA-Z0-9]/g, '')).join('');
+    return pascal || 'Component';
+  };
+
+  const projectSlug = projectName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'luniobuilder-export';
+  const packageJson = {
+    name: projectSlug,
+    version: '0.1.0',
+    private: true,
+    dependencies: {
+      react: '^18.2.0',
+      'react-dom': '^18.2.0',
+      'react-scripts': '^5.0.1',
+    },
+    scripts: {
+      start: 'react-scripts start',
+      build: 'react-scripts build',
+      test: 'react-scripts test',
+      eject: 'react-scripts eject',
+    },
+  };
+
+  const componentElements = getComponentElements(pages);
+  const componentNameMap = new Map<string, string>();
+  const componentNameSet = new Set<string>();
+
+  componentElements.forEach(component => {
+    const baseName = toPascalCaseName(component.componentName || component.name || 'Component');
+    let nextName = baseName;
+    let counter = 1;
+    while (componentNameSet.has(nextName)) {
+      nextName = `${baseName}${counter}`;
+      counter += 1;
+    }
+    componentNameSet.add(nextName);
+    componentNameMap.set(component.id, nextName);
+  });
+
+  const pageNameSet = new Set<string>();
+  const pageFileSet = new Set<string>();
+  const pageMetadata = pages.map(pageItem => ({
+    page: pageItem,
+    componentName: getPageComponentName(pageItem, pageNameSet),
+    fileName: getPageFileName(pageItem, pageFileSet),
+  }));
+
+  const files: Array<{ path: string; content: string }> = [
+    { path: 'package.json', content: JSON.stringify(packageJson, null, 2) },
+    { path: '.gitignore', content: 'node_modules\n/build\n.DS_Store\n' },
+    { path: 'README.md', content: `# ${projectName}\n\nGenerated by LUNIO Builder. Run \`npm install\` and \`npm start\` to begin.` },
+    { path: 'public/index.html', content: `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8" />\n  <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n  <title>${projectName}</title>\n</head>\n<body>\n  <div id="root"></div>\n</body>\n</html>` },
+    { path: 'public/manifest.json', content: JSON.stringify({
+      short_name: projectName,
+      name: projectName,
+      start_url: '.',
+      display: 'standalone',
+      background_color: '#ffffff',
+      theme_color: '#000000',
+      icons: [],
+    }, null, 2) },
+    { path: 'public/robots.txt', content: 'User-agent: *\nDisallow:' },
+    { path: 'src/index.js', content: `import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport App from './App';\nimport './index.css';\n\nconst root = ReactDOM.createRoot(document.getElementById('root'));\nroot.render(\n  <React.StrictMode>\n    <App />\n  </React.StrictMode>\n);` },
+  ];
+
+  const appImports = pageMetadata.map(meta => `import ${meta.componentName} from './pages/${meta.fileName}';`).join('\n');
+  const pageEntries = pageMetadata.map(meta => `  { title: '${meta.page.name.replace(/'/g, "\\'")}', Component: ${meta.componentName} }`).join(',\n');
+  const pageButtons = pageMetadata.map((meta, index) => `            <button type="button" className={currentIndex === ${index} ? 'active' : ''} onClick={() => setCurrentIndex(${index})}>${meta.page.name.replace(/'/g, "\\'")}</button>`).join('\n');
+
+  const appSource = `import React, { useState } from 'react';\n${appImports}\nimport './App.css';\n\nconst pages = [\n${pageEntries}\n];\n\nconst App = () => {\n  const [currentIndex, setCurrentIndex] = useState(0);\n  const ActivePage = pages[currentIndex].Component;\n\n  return (\n    <div className="app-shell">\n      <nav className="page-nav">\n${pageButtons}\n      </nav>\n      <main className="page-view">\n        <ActivePage />\n      </main>\n    </div>\n  );\n};\n\nexport default App;`;
+
+  files.push({ path: 'src/App.jsx', content: appSource });
+  files.push({ path: 'src/App.css', content: `body { margin: 0; font-family: system-ui, sans-serif; background: #f8fafc; color: #111827; }\n.app-shell { min-height: 100vh; }\n.page-nav { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }\n.page-nav button { border: none; padding: 10px 14px; background: #e5e7eb; color: #111827; border-radius: 9999px; cursor: pointer; }\n.page-nav button.active { background: #2563eb; color: #ffffff; }\n.page-view { padding: 24px; }` });
+  files.push({ path: 'src/index.css', content: `* { box-sizing: border-box; }\nbody { margin: 0; background: #f8fafc; color: #111827; }\nimg { max-width: 100%; display: block; }` });
+  files.push({ path: 'src/reportWebVitals.js', content: `const reportWebVitals = onPerfEntry => {\n  if (onPerfEntry && onPerfEntry instanceof Function) {\n    import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {\n      getCLS(onPerfEntry);\n      getFID(onPerfEntry);\n      getFCP(onPerfEntry);\n      getLCP(onPerfEntry);\n      getTTFB(onPerfEntry);\n    });\n  }\n};\nexport default reportWebVitals;` });
+  files.push({ path: 'src/setupTests.js', content: `// jest-dom adds custom jest matchers for asserting on DOM nodes.\n// allows you to do things like:\n// expect(element).toHaveTextContent(/react/i)\n// learn more: https://github.com/testing-library/jest-dom\nimport '@testing-library/jest-dom';` });
+
+  const componentFolderFiles = new Set<string>();
+  componentElements.forEach(component => {
+    const componentName = componentNameMap.get(component.id)!;
+    const componentDependencies = Array.from(collectReactDependenciesForComponent(component, componentNameMap));
+    const componentImports = componentDependencies.map(dep => `import ${dep} from './${dep}';`).join('\n');
+    const componentBody = renderElementToReactWithComponents(component, componentNameMap, 2, true);
+    const componentSource = `${componentImports ? `${componentImports}\n\n` : ''}import React from 'react';\n\nconst ${componentName} = () => (\n${componentBody}\n);\n\nexport default ${componentName};`;
+    const componentPath = `src/components/${componentName}.jsx`;
+    if (!componentFolderFiles.has(componentPath)) {
+      componentFolderFiles.add(componentPath);
+      files.push({ path: componentPath, content: componentSource });
+    }
+  });
+
+  pageMetadata.forEach(meta => {
+    const pageDependencies = Array.from(collectReactDependenciesForPage(meta.page, componentNameMap));
+    const pageImports = pageDependencies.map(dep => `import ${dep} from '../components/${dep}';`).join('\n');
+    const pageBody = meta.page.elements.length
+      ? meta.page.elements.map(element => renderElementToReactWithComponents(element, componentNameMap, 2)).join('\n')
+      : `  <div style={{ padding: 32, fontFamily: 'system-ui, sans-serif', color: '#4b5563' }}>No content to export.</div>`;
+    const pageSource = `${pageImports ? `${pageImports}\n\n` : ''}import React from 'react';\n\nconst ${meta.componentName} = () => (\n  <>\n${pageBody}\n  </>\n);\n\nexport default ${meta.componentName};`;
+    files.push({ path: `src/pages/${meta.fileName}.jsx`, content: pageSource });
+  });
+
+  return files;
+};
+
 import React from 'react';
 
 export const canHaveChildren = (type: ElementType): boolean => {

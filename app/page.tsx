@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import SignIn from './components/auth/googleSignIn'
 import UserAvatar from './components/auth/UserAvatar'
-import { auth } from './auth'
+import { auth } from './auth/auth'
 import Header from './components/home/Header'
 
 const page = async () => {

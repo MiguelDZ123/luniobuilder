@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import React from 'react'
 import SignIn from '../auth/googleSignIn'
-import { auth } from '@/app/auth'
+import { auth } from '@/app/auth/auth'
 import UserAvatar from '../auth/UserAvatar'
 import { Menu } from 'lucide-react'
-import { signIn } from "../../auth"
+import { signIn } from "../../auth/auth"
 import {
     Popover,
     PopoverContent,

@@ -134,6 +134,8 @@ export interface BuilderElement {
   parentId: string | null;
   locked: boolean;
   hidden: boolean;
+  isComponent?: boolean;
+  componentName?: string;
 }
 
 export interface Page {
