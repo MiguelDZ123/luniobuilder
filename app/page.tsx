@@ -25,7 +25,9 @@ const page = async () => {
           </div>
         </div>
         <div className='border-8 border-white/10 p-2 rounded-2xl'>
-          <img src="/heroo.gif" alt="Placeholder" />
+          <video autoPlay muted loop width="640" height="360">
+            <source src="mav.webm" type="video/webm"></source>
+          </video>
         </div>
       </div>
       <div className='absolute bottom-4 right-4 w-full text-center text-gray-500 text-xs'>
