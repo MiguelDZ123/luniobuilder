@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Header from '../components/home/Header';
 
 interface ProjectRecord {
   id: string;
@@ -107,6 +106,7 @@ export default function Dashboard() {
       <div className='max-w-6xl mx-auto'>
         <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8'>
           <div>
+            <Link href='/' className='mb-5'>← Back to Home</Link>
             <h1 className='text-4xl font-bold'>Your Projects</h1>
             <p className='text-gray-400 mt-2'>Create new projects, open saved work, and go directly to the editor.</p>
           </div>

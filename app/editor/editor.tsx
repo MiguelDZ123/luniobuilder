@@ -14,7 +14,6 @@ import { useSearchParams } from 'next/navigation';
 export default function App() {
 
   const {
-    projectId,
     loadProject,
     isPreviewMode,
     selectedElementId,
