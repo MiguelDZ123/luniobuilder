@@ -90,13 +90,29 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'Missing projectId' }, { status: 400 });
   }
 
-  const title = body.title || 'Untitled Project';
-  const slug = body.slug || `/project-${Date.now()}`;
-  const content = body.content || { pages: [], currentPageId: '' };
+  const updates: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (body.title !== undefined) {
+    updates.title = body.title || 'Untitled Project';
+  }
+
+  if (body.slug !== undefined) {
+    updates.slug = body.slug || `/project-${Date.now()}`;
+  }
+
+  if (body.content !== undefined) {
+    updates.content = body.content;
+  }
+
+  if (Object.keys(updates).length === 1) {
+    return NextResponse.json({ error: 'No project fields provided to update' }, { status: 400 });
+  }
 
   const { data, error } = await supabaseServer
     .from('projects')
-    .update({ title, slug, content, updated_at: new Date().toISOString() })
+    .update(updates)
     .eq('id', projectId)
     .eq('user_id', userId)
     .select('id, title, slug, content, created_at, updated_at')

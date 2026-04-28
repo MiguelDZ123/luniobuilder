@@ -67,9 +67,16 @@ export interface StyleProperties {
   // Background
   backgroundColor?: string;
   backgroundImage?: string;
+  backgroundGradient?: string;
   backgroundSize?: string;
   backgroundPosition?: string;
   backgroundRepeat?: string;
+
+  // Text gradient
+  textGradient?: string;
+  backgroundClip?: string;
+  WebkitBackgroundClip?: string;
+  WebkitTextFillColor?: string;
 
   // Border
   border?: string;

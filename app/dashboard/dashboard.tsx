@@ -169,6 +169,9 @@ export default function Dashboard() {
                   <Link href={`/editor?projectId=${project.id}`} className='rounded-full bg-[#1D976C] px-3 py-2 text-xs font-semibold text-black transition hover:opacity-90'>
                     Open
                   </Link>
+                  <Link href={`/dashboard/settings/${project.id}`} className='rounded-full bg-[#2563EB] px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90'>
+                    Settings
+                  </Link>
                   <button
                     onClick={() => deleteProject(project.id)}
                     disabled={deletingProjectId === project.id}

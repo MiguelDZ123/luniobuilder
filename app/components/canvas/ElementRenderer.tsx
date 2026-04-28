@@ -1,7 +1,7 @@
 import React, { JSX, useEffect, useRef, useState } from 'react';
 import { BuilderElement, ElementType } from '../../types/builder';
 import { useBuilderStore } from '../../stores/builderStore';
-import { canHaveChildren, getEffectiveStyles } from '../../utils/builderUtils';
+import { canHaveChildren, getEffectiveStyles, stylesToCSS } from '../../utils/builderUtils';
 import * as LucideIcons from 'lucide-react';
 import css from 'styled-jsx/css';
 
@@ -34,7 +34,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, isPre
   const ref = useRef<HTMLDivElement>(null);
 
   const styles = getEffectiveStyles(element, breakpoint);
-  const cssStyles = styles as React.CSSProperties;
+  const cssStyles = stylesToCSS(styles);
   const safeCssStyles: React.CSSProperties = {
     ...cssStyles,
     boxSizing: 'border-box',

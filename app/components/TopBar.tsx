@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Monitor, Tablet, Smartphone, Undo2, Redo2, Eye, EyeOff,
-  ZoomIn, ZoomOut, Download, Upload, Share2, Settings,
-  ChevronDown, Play,
+  ZoomIn, ZoomOut, Download, Share2, Settings,
+  Play,
   Check,
   Loader
 } from 'lucide-react';
@@ -161,9 +161,12 @@ export const TopBar: React.FC = () => {
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
 
+  const getVercelTokenKey = () => projectId ? `vercelToken_${projectId}` : 'vercelToken';
+
   const requestVercelToken = () => {
     if (typeof window === 'undefined') return null;
-    const existingToken = window.localStorage.getItem('vercelToken');
+    const projectKey = getVercelTokenKey();
+    const existingToken = window.localStorage.getItem(projectKey) || window.localStorage.getItem('vercelToken');
     if (existingToken) return existingToken;
 
     const token = window.prompt(
@@ -172,7 +175,7 @@ export const TopBar: React.FC = () => {
     if (!token) return null;
     const trimmed = token.trim();
     if (trimmed) {
-      window.localStorage.setItem('vercelToken', trimmed);
+      window.localStorage.setItem(projectKey, trimmed);
       return trimmed;
     }
     return null;
@@ -429,6 +432,17 @@ export const TopBar: React.FC = () => {
             <ZoomIn size={13} />
           </button>
         </div>
+        {/* Preview */}
+        <button
+          onClick={() => setPreviewMode(!isPreviewMode)}
+          className={`flex items-cente ml-2 gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${isPreviewMode
+            ? 'bg-blue-600 text-white'
+            : 'bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700'
+            }`}
+        >
+          {isPreviewMode ? <EyeOff size={13} /> : <Eye size={13} />}
+          {isPreviewMode ? 'Edit' : 'Preview'}
+        </button>
       </div>
 
       <div className='flex flex-row gap-3'>
@@ -456,18 +470,16 @@ export const TopBar: React.FC = () => {
           </div>
         )}
 
-        {/* Preview */}
+        {/* Export*/}
         <button
-          onClick={() => setPreviewMode(!isPreviewMode)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${isPreviewMode
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700'
-            }`}
+          onClick={exportHTML}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700`}
         >
-          {isPreviewMode ? <EyeOff size={13} /> : <Eye size={13} />}
-          {isPreviewMode ? 'Edit' : 'Preview'}
+          <Download size={13} />
+          Export HTML
         </button>
 
+        {/* Save */}
         <button
           disabled={isSaving}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${projectId
@@ -482,11 +494,11 @@ export const TopBar: React.FC = () => {
 
         {/* Publish */}
         <div className="relative">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             <button
-              onClick={handlePublish}
+              onClick={() => setShowPublishMenu(!showPublishMenu)}
               disabled={isPublishing}
-              className={`flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-l-lg text-xs font-medium transition-all ${published
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${published
                 ? 'bg-green-600 text-white'
                 : 'bg-blue-600 hover:bg-blue-500 text-white'
                 } ${isPublishing ? 'opacity-70 cursor-wait' : ''}`}
@@ -508,18 +520,12 @@ export const TopBar: React.FC = () => {
                 </>
               )}
             </button>
-            <button
-              onClick={() => setShowPublishMenu(!showPublishMenu)}
-              className="px-1.5 py-1.5 bg-blue-700 hover:bg-blue-600 text-white rounded-r-lg text-xs border-l border-blue-500/50 transition-colors"
-            >
-              <ChevronDown size={12} />
-            </button>
           </div>
 
           {showPublishMenu && (
             <div className="absolute top-full right-0 mt-1 w-48 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl py-2 z-50">
               <button
-                onClick={publishToVercel}
+                onClick={handlePublish}
                 className="w-full flex items-center gap-2 px-4 py-2 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
               >
                 <Share2 size={12} />

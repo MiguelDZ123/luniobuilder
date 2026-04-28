@@ -102,7 +102,10 @@ export const getElementDefaults = (type: ElementType): ElementDefaults => {
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '12px 28px',
+          paddingTop: '12px',
+          paddingRight: '28px',
+          paddingBottom: '12px',
+          paddingLeft: '28px',
           backgroundColor: '#2563eb',
           color: '#ffffff',
           fontSize: '16px',
@@ -397,8 +400,28 @@ export const getEffectiveStyles = (
   return { ...desktop, ...tablet, ...mobile };
 };
 
+const buildComputedStyleObject = (styles: StyleProperties): StyleProperties => {
+  const computed: StyleProperties = { ...styles };
+
+  if (styles.backgroundGradient) {
+    computed.backgroundImage = styles.backgroundGradient;
+  }
+
+  if (styles.textGradient) {
+    computed.backgroundImage = styles.textGradient;
+    computed.backgroundClip = 'text';
+    computed.WebkitBackgroundClip = 'text';
+    computed.WebkitTextFillColor = 'transparent';
+    if (!computed.color) {
+      computed.color = 'transparent';
+    }
+  }
+
+  return computed;
+};
+
 export const stylesToCSS = (styles: StyleProperties): React.CSSProperties => {
-  return styles as React.CSSProperties;
+  return buildComputedStyleObject(styles) as React.CSSProperties;
 };
 
 const camelToKebabCase = (key: string): string => {
@@ -406,8 +429,9 @@ const camelToKebabCase = (key: string): string => {
 };
 
 export const styleObjectToCssString = (styles: StyleProperties): string => {
-  return Object.entries(styles)
-    .filter(([, value]) => value !== undefined && value !== null && value !== '')
+  const computed = buildComputedStyleObject(styles);
+  return Object.entries(computed)
+    .filter(([key, value]) => value !== undefined && value !== null && value !== '' && key !== 'backgroundGradient' && key !== 'textGradient')
     .map(([key, value]) => `${camelToKebabCase(key)}:${String(value)}`)
     .join('; ');
 };
@@ -430,8 +454,9 @@ const escapeJsxString = (text?: string): string => {
 };
 
 const styleObjectToJsxString = (styles: StyleProperties): string => {
-  const entries = Object.entries(styles)
-    .filter(([, value]) => value !== undefined && value !== null && value !== '')
+  const computed = buildComputedStyleObject(styles);
+  const entries = Object.entries(computed)
+    .filter(([key, value]) => value !== undefined && value !== null && value !== '' && key !== 'backgroundGradient' && key !== 'textGradient')
     .map(([key, value]) => `${key}: '${escapeJsxString(String(value))}'`);
   return entries.join(', ');
 };
@@ -832,12 +857,11 @@ export const generateReactProjectFiles = (pages: Page[], projectName: string) =>
 
   const appImports = pageMetadata.map(meta => `import ${meta.componentName} from './pages/${meta.fileName}';`).join('\n');
   const pageEntries = pageMetadata.map(meta => `  { title: '${meta.page.name.replace(/'/g, "\\'")}', Component: ${meta.componentName} }`).join(',\n');
-  const pageButtons = pageMetadata.map((meta, index) => `            <button type="button" className={currentIndex === ${index} ? 'active' : ''} onClick={() => setCurrentIndex(${index})}>${meta.page.name.replace(/'/g, "\\'")}</button>`).join('\n');
 
-  const appSource = `import React, { useState } from 'react';\n${appImports}\nimport './App.css';\n\nconst pages = [\n${pageEntries}\n];\n\nconst App = () => {\n  const [currentIndex, setCurrentIndex] = useState(0);\n  const ActivePage = pages[currentIndex].Component;\n\n  return (\n    <div className="app-shell">\n      <nav className="page-nav">\n${pageButtons}\n      </nav>\n      <main className="page-view">\n        <ActivePage />\n      </main>\n    </div>\n  );\n};\n\nexport default App;`;
+  const appSource = `import React, { useState } from 'react';\n${appImports}\nimport './App.css';\n\nconst pages = [\n${pageEntries}\n];\n\nconst App = () => {\n  const [currentIndex, setCurrentIndex] = useState(0);\n  const ActivePage = pages[currentIndex].Component;\n\n  return (\n    <div className="app-shell">\n      ${pageMetadata.length > 1 ? `\n      <div className="page-selector">\n${pageMetadata.map((meta, index) => `        <button type="button" className={currentIndex === ${index} ? 'active' : ''} onClick={() => setCurrentIndex(${index})}>${meta.page.name.replace(/'/g, "\\'")}</button>`).join('\n')}\n      </div>\n      ` : ''}\n      <main className="page-view">\n        <ActivePage />\n      </main>\n    </div>\n  );\n};\n\nexport default App;`;
 
   files.push({ path: 'src/App.jsx', content: appSource });
-  files.push({ path: 'src/App.css', content: `body { margin: 0; font-family: system-ui, sans-serif; background: #f8fafc; color: #111827; }\n.app-shell { min-height: 100vh; }\n.page-nav { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }\n.page-nav button { border: none; padding: 10px 14px; background: #e5e7eb; color: #111827; border-radius: 9999px; cursor: pointer; }\n.page-nav button.active { background: #2563eb; color: #ffffff; }\n.page-view { padding: 24px; }` });
+  files.push({ path: 'src/App.css', content: `body { margin: 0; font-family: system-ui, sans-serif; background: #ffffff; color: #111827; }\n.app-shell { min-height: 100vh; background: #ffffff; }\n.page-selector { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px; background: transparent; }\n.page-selector button { border: none; padding: 10px 14px; background: #e5e7eb; color: #111827; border-radius: 9999px; cursor: pointer; }\n.page-selector button.active { background: #2563eb; color: #ffffff; }\n.page-view { padding: 0; }` });
   files.push({ path: 'src/index.css', content: `* { box-sizing: border-box; }\nbody { margin: 0; background: #f8fafc; color: #111827; }\nimg { max-width: 100%; display: block; }` });
   files.push({ path: 'src/reportWebVitals.js', content: `const reportWebVitals = onPerfEntry => {\n  if (onPerfEntry && onPerfEntry instanceof Function) {\n    import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {\n      getCLS(onPerfEntry);\n      getFID(onPerfEntry);\n      getFCP(onPerfEntry);\n      getLCP(onPerfEntry);\n      getTTFB(onPerfEntry);\n    });\n  }\n};\nexport default reportWebVitals;` });
   files.push({ path: 'src/setupTests.js', content: `// jest-dom adds custom jest matchers for asserting on DOM nodes.\n// allows you to do things like:\n// expect(element).toHaveTextContent(/react/i)\n// learn more: https://github.com/testing-library/jest-dom\nimport '@testing-library/jest-dom';` });

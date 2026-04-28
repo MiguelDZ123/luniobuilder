@@ -202,6 +202,7 @@ interface StyleEditorProps {
 const StyleEditor: React.FC<StyleEditorProps> = ({ element, breakpoint }) => {
   const { updateElementStyles } = useBuilderStore();
   const styles = getEffectiveStyles(element, breakpoint as 'desktop' | 'tablet' | 'mobile');
+  const isTextElement = ['heading', 'paragraph', 'button', 'link', 'listItem'].includes(element.type);
 
   const update = (key: keyof StyleProperties, value: string) => {
     updateElementStyles(element.id, { [key]: value });
@@ -375,6 +376,14 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ element, breakpoint }) => {
           onChange={v => update('textAlign', v)}
           options={['left', 'center', 'right', 'justify']}
         />
+        {isTextElement && (
+          <InputRow
+            label="Text gradient"
+            value={styles.textGradient || ''}
+            onChange={v => update('textGradient', v)}
+            placeholder="linear-gradient(90deg, #ff0080, #7928ca)"
+          />
+        )}
         <InputRow
           label="Transform"
           value={styles.textTransform || ''}
@@ -392,6 +401,12 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ element, breakpoint }) => {
 
       {/* Background */}
       <Section title="Background">
+        <InputRow
+          label="Gradient"
+          value={styles.backgroundGradient || ''}
+          onChange={v => update('backgroundGradient', v)}
+          placeholder="linear-gradient(135deg, #f97316, #ec4899)"
+        />
         <ColorInput label="Color" value={styles.backgroundColor || ''} onChange={v => update('backgroundColor', v)} />
         <InputRow label="Image" value={styles.backgroundImage || ''} onChange={v => update('backgroundImage', v)} placeholder="url(...)" />
         <InputRow
