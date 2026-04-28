@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Redo2 } from 'lucide-react';
+import ColorPicker from 'react-best-gradient-color-picker';
 import { useBuilderStore } from '../../stores/builderStore';
 import { StyleProperties } from '../../types/builder';
 import { getEffectiveStyles } from '../../utils/builderUtils';
@@ -141,6 +142,56 @@ const ColorInput: React.FC<ColorInputProps> = ({ label, value, onChange }) => {
           className="flex-1 bg-transparent text-gray-200 text-xs focus:outline-none min-w-0"
         />
       </div>
+    </div>
+  );
+};
+
+interface GradientInputProps {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  placeholder: string;
+  defaultValue: string;
+}
+
+const GradientInput: React.FC<GradientInputProps> = ({ label, value, onChange, placeholder, defaultValue }) => {
+  const [open, setOpen] = useState(false);
+  const safeValue = value || defaultValue;
+
+  return (
+    <div className="mb-3">
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <span className="text-xs text-gray-500">{label}</span>
+        <Redo2 size={14} className="text-gray-600 hover:text-gray-400 cursor-pointer" onClick={() => onChange('')} />
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          value={value || ''}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="flex-1 bg-gray-800 text-gray-200 text-xs rounded-md px-2 py-1.5 border border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500 min-w-0"
+        />
+        <div
+          className="h-9 min-w-18 rounded-md border border-gray-700"
+          style={{
+            backgroundImage: safeValue,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+          onClick={() => setOpen(prev => !prev)}
+        />
+      </div>
+      {open && (
+        <div className="absolute z-10 bottom-2 right-65 mt-3 rounded-xl border border-gray-700 overflow-hidden">
+          <ColorPicker
+            value={safeValue}
+            onChange={onChange}
+            hideColorTypeBtns={true}
+            hidePresets={true}
+          />
+        </div>
+      )}
     </div>
   );
 };
@@ -377,11 +428,12 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ element, breakpoint }) => {
           options={['left', 'center', 'right', 'justify']}
         />
         {isTextElement && (
-          <InputRow
+          <GradientInput
             label="Text gradient"
             value={styles.textGradient || ''}
             onChange={v => update('textGradient', v)}
             placeholder="linear-gradient(90deg, #ff0080, #7928ca)"
+            defaultValue="linear-gradient(90deg, rgba(255,56,129,1) 0%, rgba(125,59,230,1) 100%)"
           />
         )}
         <InputRow
@@ -401,11 +453,12 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ element, breakpoint }) => {
 
       {/* Background */}
       <Section title="Background">
-        <InputRow
+        <GradientInput
           label="Gradient"
           value={styles.backgroundGradient || ''}
           onChange={v => update('backgroundGradient', v)}
           placeholder="linear-gradient(135deg, #f97316, #ec4899)"
+          defaultValue="linear-gradient(135deg, rgba(249,115,22,1) 0%, rgba(236,72,153,1) 100%)"
         />
         <ColorInput label="Color" value={styles.backgroundColor || ''} onChange={v => update('backgroundColor', v)} />
         <InputRow label="Image" value={styles.backgroundImage || ''} onChange={v => update('backgroundImage', v)} placeholder="url(...)" />
