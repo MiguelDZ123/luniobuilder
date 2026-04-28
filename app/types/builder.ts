@@ -115,6 +115,10 @@ export interface ElementProps {
   src?: string;
   alt?: string;
   href?: string;
+  autoPlay?: boolean;
+  muted?: boolean;
+  controls?: boolean;
+  loop?: boolean;
   placeholder?: string;
   type?: string;
   label?: string;

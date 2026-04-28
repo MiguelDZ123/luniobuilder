@@ -3,7 +3,6 @@ import { BuilderElement, ElementType } from '../../types/builder';
 import { useBuilderStore } from '../../stores/builderStore';
 import { canHaveChildren, getEffectiveStyles, stylesToCSS } from '../../utils/builderUtils';
 import * as LucideIcons from 'lucide-react';
-import css from 'styled-jsx/css';
 
 interface ElementRendererProps {
   element: BuilderElement;
@@ -24,7 +23,6 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, isPre
     setDropTarget,
     moveElement,
     addElementFromPalette,
-    draggedElementType,
     updateElementProps,
     pushHistory,
   } = useBuilderStore();
@@ -301,8 +299,11 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, isPre
           <video
             src={element.props.src}
             style={{ ...safeCssStyles, maxWidth: '100%', height: 'auto' }}
-            controls={isPreview}
+            controls={element.props.controls}
             onClick={handleClick}
+            autoPlay={element.props.autoPlay}
+            muted={element.props.muted}
+            loop={element.props.autoPlay}
           />
         );
 

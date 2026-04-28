@@ -435,13 +435,13 @@ export const TopBar: React.FC = () => {
         {/* Preview */}
         <button
           onClick={() => setPreviewMode(!isPreviewMode)}
-          className={`flex items-cente ml-2 gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${isPreviewMode
+          className={`flex items-center ml-2 gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${isPreviewMode
             ? 'bg-blue-600 text-white'
             : 'bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700'
             }`}
         >
           {isPreviewMode ? <EyeOff size={13} /> : <Eye size={13} />}
-          {isPreviewMode ? 'Edit' : 'Preview'}
+          {isPreviewMode ? 'Editor' : 'Preview'}
         </button>
       </div>
 

@@ -598,6 +598,34 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ element }) => {
             placeholder="https://..."
             className="w-full bg-gray-800 text-gray-200 text-xs rounded-lg px-3 py-2 border border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
+          <label className="text-xs text-gray-500 block mt-1">Show Controls</label>
+          <input
+            type="checkbox"
+            checked={element.props.controls || false}
+            onChange={e => update('controls', e.target.checked)}
+            className="mt-2"
+          />
+          <label className="text-xs text-gray-500 block mb-1">Autoplay</label>
+          <input
+            type="checkbox"
+            checked={element.props.autoplay || false}
+            onChange={e => update('autoplay', e.target.checked)}
+            className="mt-2"
+          />
+          <label className="text-xs text-gray-500 block mb-1">Muted</label>
+          <input
+            type="checkbox"
+            checked={element.props.muted || false}
+            onChange={e => update('muted', e.target.checked)}
+            className="mt-2"
+          />
+          <label className="text-xs text-gray-500 block mb-1">Loop</label>
+          <input
+            type="checkbox"
+            checked={element.props.loop || false}
+            onChange={e => update('loop', e.target.checked)}
+            className="mt-2"
+          />
         </div>
       )}
 

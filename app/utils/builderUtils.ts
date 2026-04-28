@@ -55,7 +55,10 @@ export const getElementDefaults = (type: ElementType): ElementDefaults => {
           flexDirection: 'column',
           width: '100%',
           minHeight: '200px',
-          padding: '60px 40px',
+          paddingTop: '40px',
+          paddingBottom: '40px',
+          paddingLeft: '20px',
+          paddingRight: '20px',
           backgroundColor: '#ffffff',
         },
       };
