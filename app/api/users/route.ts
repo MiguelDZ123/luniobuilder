@@ -19,8 +19,9 @@ export async function GET() {
         .single();
 
     if (error) {
-        console.error('Error fetching users:', error)
-        return null
+        console.error('Error fetching users:', error);
+        return NextResponse.json({ error: 'Unable to fetch user data' }, { status: 500 });
     }
+
     return NextResponse.json(data);
 }
