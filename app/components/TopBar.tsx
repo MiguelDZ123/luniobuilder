@@ -330,7 +330,7 @@ export const TopBar: React.FC = () => {
   <title>${page.seo.title}</title>
   <meta name="description" content="${page.seo.description}">
 </head>
-<body style="width:screen;margin:0;padding:0;font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+<body style="width:100%;height:100%;margin:0;padding:0;font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
   ${bodyContent}
 </body>
 </html>`;
@@ -546,13 +546,13 @@ export const TopBar: React.FC = () => {
                 Export React
               </button>
               <div className="border-t border-gray-800 mt-1 pt-1">
-                <button
-                  onClick={() => setShowPublishMenu(false)}
+                <Link
+                  href={`/dashboard/settings/${projectId}`}
                   className="w-full flex items-center gap-2 px-4 py-2 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
                 >
                   <Settings size={12} />
                   Site settings
-                </button>
+                </Link>
               </div>
             </div>
           )}

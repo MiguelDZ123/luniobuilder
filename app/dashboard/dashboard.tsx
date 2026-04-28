@@ -21,6 +21,7 @@ export default function Dashboard() {
   const [saving, setSaving] = useState(false);
   const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; projectId: string | null }>({ isOpen: false, projectId: null });
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -90,9 +91,6 @@ export default function Dashboard() {
   };
 
   const deleteProject = async (projectId: string) => {
-    if (!confirm('Delete this project? This action cannot be undone.')) {
-      return;
-    }
 
     setDeletingProjectId(projectId);
     setError(null);
@@ -173,12 +171,40 @@ export default function Dashboard() {
                     Settings
                   </Link>
                   <button
-                    onClick={() => deleteProject(project.id)}
+                    onClick={() => {
+                      setDeleteModal({ isOpen: true, projectId: project.id });
+                    }}
                     disabled={deletingProjectId === project.id}
                     className='rounded-full bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-60'
                   >
                     {deletingProjectId === project.id ? 'Deleting…' : 'Delete'}
                   </button>
+                  {deleteModal.isOpen && deleteModal.projectId === project.id && (
+                    <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50'>
+                      <div className='bg-[#111214] rounded-xl p-6 w-full max-w-sm'>
+                        <h2 className='text-xl font-semibold text-white'>Confirm Deletion</h2>
+                        <p className='mt-2 text-sm text-gray-400'>Are you sure you want to delete this project? This action cannot be undone.</p>
+                        <div className='mt-6 flex justify-end gap-4'>
+                          <button
+                            onClick={() => {
+                              deleteProject(project.id);
+                              setDeleteModal({ isOpen: false, projectId: null });
+                            }}
+                            disabled={deletingProjectId === project.id}
+                            className='px-4 py-2 rounded-lg bg-red-600 text-sm text-white transition hover:bg-red-500 disabled:bg-red-500 disabled:opacity-80'
+                          >
+                            {deletingProjectId === project.id ? 'Deleting…' : 'Delete'}
+                          </button>
+                          <button
+                            onClick={() => setDeleteModal({ isOpen: false, projectId: null })}
+                            className='px-4 py-2 rounded-lg bg-gray-700 text-sm text-gray-300 transition hover:bg-gray-600'
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
