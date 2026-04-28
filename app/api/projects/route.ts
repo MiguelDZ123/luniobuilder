@@ -44,6 +44,26 @@ export async function GET(request: Request) {
   return NextResponse.json(data);
 }
 
+const getProjectLimitForRole = (role?: string) => {
+  if (!role) return 3;
+
+  switch (role.toLowerCase()) {
+    case 'admin':
+    case 'owner':
+      return null;
+    case 'pro':
+    case 'premium':
+    case 'team':
+      return 20;
+    case 'business':
+      return 50;
+    case 'free':
+    case 'basic':
+    default:
+      return 3;
+  }
+};
+
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user) {
@@ -53,6 +73,36 @@ export async function POST(request: Request) {
   const userId = session.user.id || session.user.email;
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { data: user, error: userError } = await supabaseServer
+    .schema('next_auth')
+    .from('users')
+    .select('role')
+    .eq('id', userId)
+    .single();
+
+  if (userError) {
+    return NextResponse.json({ error: userError.message }, { status: 500 });
+  }
+
+  const projectLimit = getProjectLimitForRole(user?.role);
+  if (projectLimit !== null) {
+    const { count, error: countError } = await supabaseServer
+      .from('projects')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    if (countError) {
+      return NextResponse.json({ error: countError.message }, { status: 500 });
+    }
+
+    if (typeof count === 'number' && count >= projectLimit) {
+      return NextResponse.json(
+        { error: `Project limit reached for ${user?.role || 'your'} role.`, limit: projectLimit },
+        { status: 403 }
+      );
+    }
   }
 
   const body = await request.json();

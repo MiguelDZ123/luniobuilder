@@ -13,10 +13,18 @@ interface ProjectRecord {
   updated_at: string;
 }
 
+interface UserData {
+  id: string;
+  name: string | null;
+  email: string;
+  role: string;
+}
+
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [projects, setProjects] = useState<ProjectRecord[]>([]);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null);
@@ -26,6 +34,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (status === 'authenticated') {
       fetchProjects();
+      fetchUserData();
     } else if (status === 'unauthenticated') {
       setLoading(false);
     }
@@ -47,7 +56,49 @@ export default function Dashboard() {
     setLoading(false);
   };
 
+  const fetchUserData = async () => {
+    setLoading(true);
+    setError(null);
+
+    const response = await fetch('/api/users');
+    if (!response.ok) {
+      setError('Unable to load user data.');
+      setLoading(false);
+      return;
+    }
+
+    const data = await response.json();
+    setUserData(data);
+    setLoading(false);
+  }
+
+  const getProjectLimitForRole = (role?: string) => {
+    if (!role) return 3;
+
+    switch (role.toLowerCase()) {
+      case 'admin':
+      case 'owner':
+        return null;
+      case 'pro':
+        return 20;
+      case 'business':
+        return 50;
+      case 'free':
+      default:
+        return 1;
+    }
+  };
+
+  const projectLimit = getProjectLimitForRole(userData?.role);
+  const projectCount = projects.length;
+  const reachedProjectLimit = projectLimit !== null && projectCount >= projectLimit;
+
   const createProject = async () => {
+    if (reachedProjectLimit) {
+      setError(`Your ${userData?.role || 'current'} plan allows up to ${projectLimit} projects.`);
+      return;
+    }
+
     setSaving(true);
     setError(null);
 
@@ -133,20 +184,29 @@ export default function Dashboard() {
         <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8'>
           <div>
             <Link href='/' className='mb-5'>← Back to Home</Link>
-            <h1 className='text-4xl font-bold'>Your Projects</h1>
+            <h1 className='text-4xl font-bold'>{userData?.name} {userData?.role}</h1>
             <p className='text-gray-400 mt-2'>Create new projects, open saved work, and go directly to the editor.</p>
           </div>
           <button
             onClick={createProject}
-            disabled={saving}
+            disabled={saving || reachedProjectLimit || !userData}
             className='rounded-full px-5 py-3 text-sm font-semibold text-black transition hover:opacity-90 disabled:opacity-60'
-            style={{ backgroundImage: 'linear-gradient(90deg, #1D976C, #93F9B9)' }}
+            style={{ backgroundImage: reachedProjectLimit ? 'linear-gradient(90deg, #374151, #4b5563)' : 'linear-gradient(90deg, #1D976C, #93F9B9)' }}
           >
-            {saving ? 'Creating…' : 'Create New Project'}
+            {reachedProjectLimit
+              ? `Limit reached (${projectCount}/${projectLimit})`
+              : saving
+              ? 'Creating…'
+              : 'Create New Project'}
           </button>
         </div>
 
         {error && <div className='mb-4 rounded-xl border border-red-700 bg-red-950/20 p-4 text-sm text-red-200'>{error}</div>}
+        {reachedProjectLimit && projectLimit !== null && (
+          <div className='mb-4 rounded-xl border border-yellow-700 bg-yellow-950/20 p-4 text-sm text-yellow-200'>
+            Your {userData?.role || 'current'} plan allows up to {projectLimit} projects. Delete an existing project to create more.
+          </div>
+        )}
 
         <div className='grid gap-4'>
           {loading && <div className='rounded-xl border border-gray-800 bg-[#111214] p-6 text-gray-300'>Loading your projects...</div>}
