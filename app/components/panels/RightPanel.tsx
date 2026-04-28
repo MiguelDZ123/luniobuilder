@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, Redo2 } from 'lucide-react';
 import ColorPicker from 'react-best-gradient-color-picker';

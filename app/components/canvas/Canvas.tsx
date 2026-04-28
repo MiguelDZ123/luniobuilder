@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useRef } from 'react';
 import { useBuilderStore } from '../../stores/builderStore';
 import { ElementRenderer } from './ElementRenderer';

@@ -70,7 +70,10 @@ export const getElementDefaults = (type: ElementType): ElementDefaults => {
           display: 'block',
           flexDirection: 'column',
           width: '100%',
-          padding: '16px',
+          paddingTop: '20px',
+          paddingBottom: '20px',
+          paddingLeft: '20px',
+          paddingRight: '20px',
         },
       };
     case 'heading':
@@ -142,7 +145,10 @@ export const getElementDefaults = (type: ElementType): ElementDefaults => {
           alignItems: 'center',
           justifyContent: 'space-between',
           width: '100%',
-          padding: '16px 40px',
+          paddingBottom: '16px',
+          paddingTop: '16px',
+          paddingLeft: '20px',
+          paddingRight: '20px',
           backgroundColor: '#ffffff',
           boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
           position: 'relative',

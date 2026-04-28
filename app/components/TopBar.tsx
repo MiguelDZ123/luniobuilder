@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Monitor, Tablet, Smartphone, Undo2, Redo2, Eye, EyeOff,

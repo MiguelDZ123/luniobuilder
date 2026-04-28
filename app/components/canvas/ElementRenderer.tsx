@@ -1,3 +1,5 @@
+"use client";
+
 import React, { JSX, useEffect, useRef, useState } from 'react';
 import { BuilderElement, ElementType } from '../../types/builder';
 import { useBuilderStore } from '../../stores/builderStore';

@@ -181,11 +181,20 @@ export default function Dashboard() {
   return (
     <div className='min-h-screen bg-[#0d1117] text-white px-6 py-8'>
       <div className='max-w-6xl mx-auto'>
-        <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8'>
+        <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-10 mb-8'>
           <div>
-            <Link href='/' className='mb-5'>← Back to Home</Link>
-            <h1 className='text-4xl font-bold'>{userData?.name} {userData?.role}</h1>
+            <Link href='/' className='mb-40'>← Back to Home</Link>
+            <h1 className='text-3xl font-bold mt-10'>{userData?.name}</h1>
             <p className='text-gray-400 mt-2'>Create new projects, open saved work, and go directly to the editor.</p>
+            {userData?.role && (
+              <span className={`inline-block mt-4 px-3 py-1 text-xs font-semibold rounded-full 
+              ${userData.role.toLowerCase() === 'free' ? 'bg-gray-600 text-gray-300' : 
+              userData.role.toLowerCase() === 'pro' ? 'bg-blue-600 text-white' : 
+              userData.role.toLowerCase() === 'business' ? 'bg-green-600 text-white' : 
+              'bg-red-500/20 text-red-300 border border-red-500'}`}>
+                {userData.role}
+              </span>
+            )}
           </div>
           <button
             onClick={createProject}
