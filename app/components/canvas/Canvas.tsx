@@ -33,16 +33,29 @@ export const Canvas: React.FC = () => {
     }
   };
 
+  const handleCanvasDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const types = Array.from(e.dataTransfer.types || []);
+    if (types.includes('elementType') || types.includes('elementId')) {
+      setDropTarget('canvas-root', 'inside');
+      e.dataTransfer.dropEffect = types.includes('elementType') ? 'copy' : 'move';
+    }
+  };
+
   const handleCanvasDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    if (page.elements.length === 0) {
+    e.stopPropagation();
+    const types = Array.from(e.dataTransfer.types || []);
+    if (types.includes('elementType') || types.includes('elementId')) {
       setDropTarget('canvas-root', 'inside');
+      e.dataTransfer.dropEffect = types.includes('elementType') ? 'copy' : 'move';
     }
   };
 
   const handleCanvasDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     const elementId = e.dataTransfer.getData('elementId');
     const elementType = e.dataTransfer.getData('elementType') as ElementType;
 
@@ -67,8 +80,8 @@ export const Canvas: React.FC = () => {
 
   if (isPreviewMode) {
     return (
-      <div className="flex-1 overflow-auto bg-gray-100 flex justify-center min-h-screen">
-        <div style={{ width: breakpointWidth }} className="bg-white min-h-screen relative">
+      <div className="flex-1 overflow-auto bg-gray-100 flex justify-center">
+        <div style={{ width: breakpointWidth }} className="bg-white relative">
           {page.elements.map(el => (
             <ElementRenderer key={el.id} element={el} isPreview />
           ))}
@@ -93,8 +106,9 @@ export const Canvas: React.FC = () => {
         <div
           ref={canvasRef}
           data-canvas-root="true"
-          className={`bg-white min-h-screen relative ${isCanvasDropTarget ? 'ring-2 ring-blue-400' : ''}`}
+          className={`bg-white min-h-screen pb-10 relative ${isCanvasDropTarget ? 'ring-2 ring-blue-400' : ''}`}
           onClick={handleCanvasClick}
+          onDragEnter={handleCanvasDragEnter}
           onDragOver={handleCanvasDragOver}
           onDrop={handleCanvasDrop}
           onDragLeave={handleCanvasDragLeave}

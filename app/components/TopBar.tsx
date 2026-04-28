@@ -360,7 +360,7 @@ export const TopBar: React.FC = () => {
       <div className='flex flex-row'>
         {/* Logo */}
         <div className="flex items-center gap-2 mr-2">
-          <Link href="/" className="text-white font-semibold text-sm tracking-tight">
+          <Link href="/dashboard" className="text-white font-semibold text-sm tracking-tight">
             LUNIO Builder
           </Link>
         </div>

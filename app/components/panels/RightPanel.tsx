@@ -18,7 +18,7 @@ export const RightPanel: React.FC = () => {
         <>
           {/* Tabs */}
           <div className="flex border-b border-gray-800">
-            {(['style', 'content'] as const).map(tab => (
+            {(['style', 'content', 'css'] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setRightPanelTab(tab)}
@@ -27,7 +27,7 @@ export const RightPanel: React.FC = () => {
                     : 'text-gray-400 hover:text-gray-200'
                   }`}
               >
-                {tab}
+                {tab === 'css' ? 'CSS' : tab}
               </button>
             ))}
           </div>
@@ -35,6 +35,7 @@ export const RightPanel: React.FC = () => {
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {rightPanelTab === 'style' && <StyleEditor element={element} breakpoint={breakpoint} />}
             {rightPanelTab === 'content' && <ContentEditor element={element} />}
+            {rightPanelTab === 'css' && <CSSEditor element={element} breakpoint={breakpoint} />}
           </div>
         </>
       ) : (
@@ -496,6 +497,162 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ element, breakpoint }) => {
         <InputRow label="z-index" value={styles.zIndex || ''} onChange={v => update('zIndex', v)} placeholder="auto" />
         <InputRow label="Transition" value={styles.transition || ''} onChange={v => update('transition', v)} placeholder="all 0.2s ease" />
       </Section>
+    </div>
+  );
+};
+
+const toKebabCase = (key: string) => key.replace(/[A-Z]/g, match => `-${match.toLowerCase()}`);
+const toCamelCase = (key: string) => key.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
+
+interface CSSRow {
+  id: string;
+  property: string;
+  value: string;
+  enabled: boolean;
+}
+
+const createEmptyRow = (): CSSRow => ({
+  id: `${Date.now()}-${Math.random()}`,
+  property: '',
+  value: '',
+  enabled: true,
+});
+
+const buildStyleRows = (styles: StyleProperties): CSSRow[] =>
+  Object.entries(styles)
+    .filter(([, value]) => value !== undefined && value !== '')
+    .map(([key, value]) => ({
+      id: `${key}-${Math.random()}`,
+      property: toKebabCase(key),
+      value: String(value),
+      enabled: true,
+    }));
+
+const CSSEditor: React.FC<StyleEditorProps> = ({ element, breakpoint }) => {
+  const { updateElementStyles } = useBuilderStore();
+  const [rows, setRows] = useState<CSSRow[]>([]);
+
+  const currentStyles = element.styles?.[breakpoint] || {};
+
+  React.useEffect(() => {
+    setRows([...buildStyleRows(currentStyles), createEmptyRow()]);
+  }, [element.id, breakpoint, currentStyles]);
+
+  const handleToggle = (id: string) => {
+    setRows(prev => prev.map(row => row.id === id ? { ...row, enabled: !row.enabled } : row));
+  };
+
+  const handleChange = (id: string, field: 'property' | 'value', value: string) => {
+    setRows(prev => prev.map(row => row.id === id ? { ...row, [field]: value } : row));
+  };
+
+  const handleDeleteRow = (id: string) => {
+    setRows(prev => prev.filter(row => row.id !== id));
+  };
+
+  const handleAddRow = () => {
+    setRows(prev => [...prev, createEmptyRow()]);
+  };
+
+  const handleSave = () => {
+    const enabledStyles = rows.reduce((acc, row) => {
+      const property = row.property.trim();
+      const value = row.value.trim();
+      if (row.enabled && property && value) {
+        acc[toCamelCase(property) as keyof StyleProperties] = value;
+      }
+      return acc;
+    }, {} as Partial<StyleProperties>);
+
+    const clearedStyles = Object.keys(currentStyles).reduce((acc, key) => {
+      const kebab = toKebabCase(key);
+      const matchingRow = rows.find(row => row.property.trim() === kebab);
+      if (!matchingRow || !matchingRow.enabled || !matchingRow.value.trim()) {
+        acc[key as keyof StyleProperties] = undefined;
+      }
+      return acc;
+    }, {} as Partial<StyleProperties>);
+
+    updateElementStyles(element.id, { ...clearedStyles, ...enabledStyles });
+  };
+
+  const handleReset = () => {
+    setRows([...buildStyleRows(currentStyles), createEmptyRow()]);
+  };
+
+  return (
+    <div className="p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">CSS Editor</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleReset}
+            className="text-xs px-3 py-1.5 rounded bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700"
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="text-xs px-3 py-1.5 rounded bg-blue-500 text-white hover:bg-blue-400"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+
+      <div className="grid gap-2">
+        <div className="flex flex-row items-center gap-2 px-2 text-[11px] text-gray-400 uppercase tracking-wider">
+          <span />
+          <span>Property</span>
+          <span>Value</span>
+          <span />
+        </div>
+        {rows.map(row => (
+          <div
+            key={row.id}
+            className={`grid grid-cols-[40%_40%_20%] items-center gap-2 px-2 rounded-md border border-gray-800 ${row.enabled ? 'bg-gray-900' : 'bg-gray-950/50 opacity-70'}`}
+          >
+            <input
+              type="text"
+              value={row.property}
+              onChange={e => handleChange(row.id, 'property', e.target.value)}
+              placeholder="property"
+              className="w-full bg-transparent text-gray-100 text-xs rounded px-2 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <input
+              type="text"
+              value={row.value}
+              onChange={e => handleChange(row.id, 'value', e.target.value)}
+              placeholder="value"
+              className="w-full bg-transparent text-gray-100 text-xs rounded px-2 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <button
+              type="button"
+              onClick={() => handleDeleteRow(row.id)}
+              className="text-gray-400 hover:text-red-400"
+              title="Delete declaration"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={handleAddRow}
+        className="w-full text-left text-xs font-medium uppercase tracking-wide text-blue-300 hover:text-white px-3 py-2 rounded bg-gray-800 border border-gray-700"
+      >
+        + Add property
+      </button>
+
+      <div className="text-[11px] text-gray-500">
+        Use kebab-case property names. If a change is not seen then the property is written wrong.
+      </div>
     </div>
   );
 };

@@ -175,7 +175,7 @@ export interface BuilderState {
   breakpoint: Breakpoint;
   canvasScale: number;
   leftPanelTab: 'components' | 'layers' | 'pages';
-  rightPanelTab: 'style' | 'content' | 'seo';
+  rightPanelTab: 'style' | 'content' | 'css' | 'seo';
   history: Page[][];
   historyIndex: number;
   isPreviewMode: boolean;
