@@ -20,7 +20,7 @@ export default function ProjectSettingsPage() {
   const [project, setProject] = useState<ProjectRecord | null>(null);
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
-  const [vercelKey, setVercelKey] = useState('');
+  const [vercel_token, setVercelKey] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +78,7 @@ export default function ProjectSettingsPage() {
         projectId,
         title,
         slug,
+        vercel_token,
       }),
     });
 
@@ -90,8 +91,8 @@ export default function ProjectSettingsPage() {
 
     if (typeof window !== 'undefined') {
       const projectKey = `vercelToken_${projectId}`;
-      if (vercelKey.trim()) {
-        window.localStorage.setItem(projectKey, vercelKey.trim());
+      if (vercel_token.trim()) {
+        window.localStorage.setItem(projectKey, vercel_token.trim());
       } else {
         window.localStorage.removeItem(projectKey);
       }
@@ -156,7 +157,7 @@ export default function ProjectSettingsPage() {
             <label className='mb-2 block text-sm font-medium text-gray-300'>Vercel API Key</label>
             <input
               type='password'
-              value={vercelKey}
+              value={vercel_token}
               onChange={event => setVercelKey(event.target.value)}
               placeholder='Enter Vercel Personal Token'
               className='w-full rounded-2xl border border-gray-700 bg-[#0f1218] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500'

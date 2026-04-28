@@ -106,6 +106,10 @@ export async function PATCH(request: Request) {
     updates.content = body.content;
   }
 
+  if (body.vercel_token !== undefined) {
+    updates.vercel_token = body.vercel_token;
+  }
+
   if (Object.keys(updates).length === 1) {
     return NextResponse.json({ error: 'No project fields provided to update' }, { status: 400 });
   }
