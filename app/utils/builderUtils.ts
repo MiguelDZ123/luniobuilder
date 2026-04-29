@@ -9,6 +9,7 @@ export const deepClone = <T>(obj: T): T => {
 };
 
 const emptyStyles = (): ResponsiveStyles => ({
+  widescreen: {},
   desktop: {},
   tablet: {},
   mobile: {},
@@ -26,6 +27,7 @@ export const createDefaultElement = (
     name: defaults.name,
     props: defaults.props,
     styles: {
+      widescreen: {},
       desktop: defaults.styles,
       tablet: {},
       mobile: {},
@@ -398,13 +400,15 @@ export const getElementDefaults = (type: ElementType): ElementDefaults => {
 
 export const getEffectiveStyles = (
   element: BuilderElement,
-  breakpoint: 'desktop' | 'tablet' | 'mobile'
+  breakpoint: 'widescreen' | 'desktop' | 'tablet' | 'mobile'
 ): StyleProperties => {
+  const widescreen = element.styles.widescreen || {};
   const desktop = element.styles.desktop || {};
   const tablet = element.styles.tablet || {};
   const mobile = element.styles.mobile || {};
 
   if (breakpoint === 'desktop') return desktop;
+  if (breakpoint === 'widescreen') return { ...desktop, ...widescreen };
   if (breakpoint === 'tablet') return { ...desktop, ...tablet };
   return { ...desktop, ...tablet, ...mobile };
 };

@@ -24,8 +24,9 @@ export const Canvas: React.FC = () => {
   const page = getCurrentPage();
 
   const breakpointWidth = {
-    desktop: '100%',
-    tablet: '768px',
+    widescreen: '1920px',
+    desktop: '1848px',
+    tablet: '921px',
     mobile: '390px',
   }[breakpoint];
 

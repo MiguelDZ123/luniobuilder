@@ -130,6 +130,7 @@ export interface ElementProps {
 }
 
 export interface ResponsiveStyles {
+  widescreen: StyleProperties;
   desktop: StyleProperties;
   tablet: StyleProperties;
   mobile: StyleProperties;
@@ -161,7 +162,7 @@ export interface Page {
   };
 }
 
-export type Breakpoint = 'desktop' | 'tablet' | 'mobile';
+export type Breakpoint = 'widescreen' | 'desktop' | 'tablet' | 'mobile';
 
 export interface BuilderState {
   pages: Page[];

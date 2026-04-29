@@ -6,7 +6,9 @@ import {
   ZoomIn, ZoomOut, Download, Share2, Settings,
   Play,
   Check,
-  Loader
+  Loader,
+  MonitorCheck,
+  Star
 } from 'lucide-react';
 import { useBuilderStore } from '../stores/builderStore';
 import {
@@ -396,7 +398,8 @@ export const TopBar: React.FC = () => {
         {/* Breakpoints */}
         <div className="flex items-center gap-0.5 bg-gray-800/60 rounded-lg p-0.5 border border-gray-700/50">
           {[
-            { id: 'desktop' as const, icon: <Monitor size={13} />, label: 'Desktop' },
+            { id: 'widescreen' as const, icon: <Monitor size={13} />, label: 'Widescreen' },
+            { id: 'desktop' as const, icon: <MonitorCheck size={13} />, label: 'Desktop (default)' },
             { id: 'tablet' as const, icon: <Tablet size={13} />, label: 'Tablet' },
             { id: 'mobile' as const, icon: <Smartphone size={13} />, label: 'Mobile' },
           ].map(bp => (

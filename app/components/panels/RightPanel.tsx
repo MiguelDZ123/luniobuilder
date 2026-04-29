@@ -255,7 +255,7 @@ interface StyleEditorProps {
 
 const StyleEditor: React.FC<StyleEditorProps> = ({ element, breakpoint }) => {
   const { updateElementStyles } = useBuilderStore();
-  const styles = getEffectiveStyles(element, breakpoint as 'desktop' | 'tablet' | 'mobile');
+  const styles = getEffectiveStyles(element, breakpoint as 'widescreen' | 'desktop' | 'tablet' | 'mobile');
   const isTextElement = ['heading', 'paragraph', 'button', 'link', 'listItem'].includes(element.type);
 
   const update = (key: keyof StyleProperties, value: string) => {
