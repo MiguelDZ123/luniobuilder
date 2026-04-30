@@ -8,7 +8,7 @@ import {
   Check,
   Loader,
   MonitorCheck,
-  Star
+  Code,
 } from 'lucide-react';
 import { useBuilderStore } from '../stores/builderStore';
 import {
@@ -16,7 +16,16 @@ import {
   generateReactProjectFiles,
 } from '../utils/builderUtils';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
+import Editor from '@monaco-editor/react';
+import { useSession } from 'next-auth/react';
+
+interface UserData {
+  id: string;
+  name: string | null;
+  email: string;
+  role: string;
+}
 
 const textEncoder = new TextEncoder();
 const crc32Table = new Uint32Array(256);
@@ -157,15 +166,46 @@ export const TopBar: React.FC = () => {
   const [publishMessage, setPublishMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+  const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
+  const [codeFiles, setCodeFiles] = useState<Array<{ path: string; content: string }>>([]);
+  const [selectedCodePath, setSelectedCodePath] = useState<string>('');
   const saveTimeoutRef = useRef<number | null>(null);
   const isSavingRef = useRef(false);
   const isInitialRender = useRef(true);
   const page = getCurrentPage();
+  const { status } = useSession();
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
 
   const getVercelTokenKey = () => projectId ? `vercelToken_${projectId}` : 'vercelToken';
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchUserData();
+    } else if (status === 'unauthenticated') {
+      setLoading(false);
+    }
+  }, [status]);
+
+  const fetchUserData = async () => {
+    setLoading(true);
+    setError(null);
+
+    const response = await fetch('/api/users');
+    if (!response.ok) {
+      setError('Unable to load user data.');
+      setLoading(false);
+      return;
+    }
+
+    const data = await response.json();
+    setUserData(data);
+    setLoading(false);
+  }
 
   const requestVercelToken = () => {
     if (typeof window === 'undefined') return null;
@@ -359,210 +399,292 @@ export const TopBar: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const openCodeModal = () => {
+    const projectName = page.name || 'LUNIOProject';
+    const files = generateReactProjectFiles(pages, projectName);
+    setCodeFiles(files);
+    setSelectedCodePath(files[0]?.path || '');
+    setIsCodeModalOpen(true);
+  };
+
+  const selectedCodeFile = codeFiles.find(file => file.path === selectedCodePath) || codeFiles[0] || null;
+
   return (
-    <header className="h-12 bg-[#0d1117] border-b border-gray-800 flex justify-between items-center px-4 gap-3 z-50 shrink-0">
-      <div className='flex flex-row'>
-        {/* Logo */}
-        <div className="flex items-center gap-2 mr-2">
-          <Link href="/dashboard" className="text-white font-semibold text-sm tracking-tight">
-            LUNIO Builder
-          </Link>
-        </div>
+    <>
+      <header className="h-12 bg-[#0d1117] border-b border-gray-800 flex justify-between items-center px-4 gap-3 z-50 shrink-0">
+        <div className='flex flex-row'>
+          {/* Logo */}
+          <div className="flex items-center gap-2 mr-2">
+            <Link href="/dashboard" className="text-white font-semibold text-sm tracking-tight">
+              LUNIO Builder
+            </Link>
+          </div>
 
-        {/* Page name */}
-        <div className="text-gray-400 text-xs border-l border-gray-800 pl-3">
-          <span className="text-gray-500">/</span> {page.name}
+          {/* Page name */}
+          <div className="text-gray-400 text-xs border-l border-gray-800 pl-3">
+            <span className="text-gray-500">/</span> {page.name}
+          </div>
         </div>
-      </div>
-      <div className='flex flex-row'>
-        {/* History */}
-        <div className="flex items-center gap-1 border-r border-gray-800 pr-3">
-          <button
-            onClick={undo}
-            disabled={!canUndo}
-            className={`p-1.5 rounded-md transition-colors ${canUndo ? 'text-gray-400 hover:text-white hover:bg-gray-800' : 'text-gray-700 cursor-not-allowed'}`}
-            title="Undo (Ctrl+Z)"
-          >
-            <Undo2 size={14} />
-          </button>
-          <button
-            onClick={redo}
-            disabled={!canRedo}
-            className={`p-1.5 rounded-md transition-colors ${canRedo ? 'text-gray-400 hover:text-white hover:bg-gray-800' : 'text-gray-700 cursor-not-allowed'}`}
-            title="Redo (Ctrl+Y)"
-          >
-            <Redo2 size={14} />
-          </button>
-        </div>
-
-        {/* Breakpoints */}
-        <div className="flex items-center gap-0.5 bg-gray-800/60 rounded-lg p-0.5 border border-gray-700/50">
-          {[
-            { id: 'widescreen' as const, icon: <Monitor size={13} />, label: 'Widescreen' },
-            { id: 'desktop' as const, icon: <MonitorCheck size={13} />, label: 'Desktop (default)' },
-            { id: 'tablet' as const, icon: <Tablet size={13} />, label: 'Tablet' },
-            { id: 'mobile' as const, icon: <Smartphone size={13} />, label: 'Mobile' },
-          ].map(bp => (
-            <button
-              key={bp.id}
-              onClick={() => setBreakpoint(bp.id)}
-              title={bp.label}
-              className={`p-1.5 rounded-md transition-all ${breakpoint === bp.id
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-gray-400 hover:text-gray-200'
-                }`}
-            >
-              {bp.icon}
-            </button>
-          ))}
-        </div>
-        {/* Zoom */}
-        <div className="flex items-center gap-1 border-x border-gray-800 px-3">
-          <button
-            onClick={zoomOut}
-            className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
-          >
-            <ZoomOut size={13} />
-          </button>
-          <button
-            onClick={() => setCanvasScale(1)}
-            className="text-xs text-gray-400 hover:text-white w-10 text-center transition-colors"
-          >
-            {Math.round(canvasScale * 100)}%
-          </button>
-          <button
-            onClick={zoomIn}
-            className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
-          >
-            <ZoomIn size={13} />
-          </button>
-        </div>
-        {/* Preview */}
-        <button
-          onClick={() => setPreviewMode(!isPreviewMode)}
-          className={`flex items-center ml-2 gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${isPreviewMode
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700'
-            }`}
-        >
-          {isPreviewMode ? <EyeOff size={13} /> : <Eye size={13} />}
-          {isPreviewMode ? 'Editor' : 'Preview'}
-        </button>
-      </div>
-
-      <div className='flex flex-row gap-3'>
-        {/* Element actions */}
-        {selectedElementId && !isPreviewMode && (
+        <div className='flex flex-row'>
+          {/* History */}
           <div className="flex items-center gap-1 border-r border-gray-800 pr-3">
             <button
-              onClick={() => duplicateElement(selectedElementId)}
-              className="px-2 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
+              onClick={undo}
+              disabled={!canUndo}
+              className={`p-1.5 rounded-md transition-colors ${canUndo ? 'text-gray-400 hover:text-white hover:bg-gray-800' : 'text-gray-700 cursor-not-allowed'}`}
+              title="Undo (Ctrl+Z)"
             >
-              Copy
+              <Undo2 size={14} />
             </button>
             <button
-              onClick={() => deleteElement(selectedElementId)}
-              className="px-2 py-1 text-xs text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-md transition-colors"
+              onClick={redo}
+              disabled={!canRedo}
+              className={`p-1.5 rounded-md transition-colors ${canRedo ? 'text-gray-400 hover:text-white hover:bg-gray-800' : 'text-gray-700 cursor-not-allowed'}`}
+              title="Redo (Ctrl+Y)"
             >
-              Delete
+              <Redo2 size={14} />
             </button>
           </div>
-        )}
 
-        {publishMessage && (
-          <div className="mt-1 text-xs text-gray-300 max-w-xs whitespace-normal">
-            {publishMessage}
+          {/* Breakpoints */}
+          <div className="flex items-center gap-0.5 bg-gray-800/60 rounded-lg p-0.5 border border-gray-700/50">
+            {[
+              { id: 'widescreen' as const, icon: <Monitor size={13} />, label: 'Widescreen' },
+              { id: 'desktop' as const, icon: <MonitorCheck size={13} />, label: 'Desktop (default)' },
+              { id: 'tablet' as const, icon: <Tablet size={13} />, label: 'Tablet' },
+              { id: 'mobile' as const, icon: <Smartphone size={13} />, label: 'Mobile' },
+            ].map(bp => (
+              <button
+                key={bp.id}
+                onClick={() => setBreakpoint(bp.id)}
+                title={bp.label}
+                className={`p-1.5 rounded-md transition-all ${breakpoint === bp.id
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-gray-400 hover:text-gray-200'
+                  }`}
+              >
+                {bp.icon}
+              </button>
+            ))}
           </div>
-        )}
-
-        {/* Export*/}
-        <button
-          onClick={exportHTML}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700`}
-        >
-          <Download size={13} />
-          Export HTML
-        </button>
-
-        {/* Save */}
-        <button
-          disabled={isSaving}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${projectId
-            ? 'bg-green-600 text-white hover:bg-green-500'
-            : 'bg-gray-700 text-gray-300 cursor-not-allowed'
-            }`}
-          title={projectId ? 'Save Project' : 'Create project from Dashboard first'}
-        >
-          {isSaving ? <Loader size={13} /> : <Check size={13} />}
-          {isSaving ? 'Saving...' : 'Saved'}
-        </button>
-
-        {/* Publish */}
-        <div className="relative">
-          <div className="flex items-center">
+          {/* Zoom */}
+          <div className="flex items-center gap-1 border-x border-gray-800 px-3">
             <button
-              onClick={() => setShowPublishMenu(!showPublishMenu)}
-              disabled={isPublishing}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${published
-                ? 'bg-green-600 text-white'
-                : 'bg-blue-600 hover:bg-blue-500 text-white'
-                } ${isPublishing ? 'opacity-70 cursor-wait' : ''}`}
+              onClick={zoomOut}
+              className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
             >
-              {isPublishing ? (
-                <>
-                  <Loader size={12} />
-                  Publishing...
-                </>
-              ) : published ? (
-                <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-300 animate-pulse" />
-                  Published!
-                </>
-              ) : (
-                <>
-                  <Play size={12} fill="currentColor" />
-                  Publish
-                </>
-              )}
+              <ZoomOut size={13} />
+            </button>
+            <button
+              onClick={() => setCanvasScale(1)}
+              className="text-xs text-gray-400 hover:text-white w-10 text-center transition-colors"
+            >
+              {Math.round(canvasScale * 100)}%
+            </button>
+            <button
+              onClick={zoomIn}
+              className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
+            >
+              <ZoomIn size={13} />
             </button>
           </div>
+          {/* Preview */}
+          <button
+            onClick={() => setPreviewMode(!isPreviewMode)}
+            className={`flex items-center ml-2 gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${isPreviewMode
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700'
+              }`}
+          >
+            {isPreviewMode ? <EyeOff size={13} /> : <Eye size={13} />}
+            {isPreviewMode ? 'Editor' : 'Preview'}
+          </button>
+        </div>
 
-          {showPublishMenu && (
-            <div className="absolute top-full right-0 mt-1 w-48 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl py-2 z-50">
+        <div className='flex flex-row gap-3'>
+          {/* Element actions */}
+          {selectedElementId && !isPreviewMode && (
+            <div className="flex items-center gap-1 border-r border-gray-800 pr-3">
               <button
-                onClick={handlePublish}
-                className="w-full flex items-center gap-2 px-4 py-2 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+                onClick={() => duplicateElement(selectedElementId)}
+                className="px-2 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
               >
-                <Share2 size={12} />
-                Publish to Vercel
+                Copy
               </button>
               <button
-                onClick={exportHTML}
-                className="w-full flex items-center gap-2 px-4 py-2 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+                onClick={() => deleteElement(selectedElementId)}
+                className="px-2 py-1 text-xs text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-md transition-colors"
               >
-                <Download size={12} />
-                Export HTML
+                Delete
               </button>
-              <button
-                onClick={exportReact}
-                className="w-full flex items-center gap-2 px-4 py-2 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
-              >
-                <Download size={12} />
-                Export React
-              </button>
-              <div className="border-t border-gray-800 mt-1 pt-1">
-                <Link
-                  href={`/dashboard/settings/${projectId}`}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
-                >
-                  <Settings size={12} />
-                  Site settings
-                </Link>
-              </div>
             </div>
           )}
+
+          {publishMessage && (
+            <div className="mt-1 text-xs text-gray-300 max-w-xs whitespace-normal">
+              {publishMessage}
+            </div>
+          )}
+
+          {/* Export*/}
+          <button
+            onClick={openCodeModal}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700"
+          >
+            <Code size={13} />
+            Code
+          </button>
+
+          {/* Save */}
+          <button
+            disabled={isSaving}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${projectId
+              ? 'bg-green-600 text-white hover:bg-green-500'
+              : 'bg-gray-700 text-gray-300 cursor-not-allowed'
+              }`}
+            title={projectId ? 'Save Project' : 'Create project from Dashboard first'}
+          >
+            {isSaving ? <Loader size={13} /> : <Check size={13} />}
+            {isSaving ? 'Saving...' : 'Saved'}
+          </button>
+
+          {/* Publish */}
+          <div className="relative">
+            <div className="flex items-center">
+              <button
+                onClick={() => setShowPublishMenu(!showPublishMenu)}
+                disabled={isPublishing}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${published
+                  ? 'bg-green-600 text-white'
+                  : 'bg-blue-600 hover:bg-blue-500 text-white'
+                  } ${isPublishing ? 'opacity-70 cursor-wait' : ''}`}
+              >
+                {isPublishing ? (
+                  <>
+                    <Loader size={12} />
+                    Publishing...
+                  </>
+                ) : published ? (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-300 animate-pulse" />
+                    Published!
+                  </>
+                ) : (
+                  <>
+                    <Play size={12} fill="currentColor" />
+                    Publish
+                  </>
+                )}
+              </button>
+            </div>
+
+            {showPublishMenu && (
+              <div className="absolute top-full right-0 mt-1 w-48 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl py-2 z-50">
+                <button
+                  onClick={handlePublish}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+                >
+                  <Share2 size={12} />
+                  Publish to Vercel
+                </button>
+                <button
+                  onClick={userData?.role !== 'pro' ? () => redirect('/pricing') : exportHTML}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+                >
+                  <Download size={12} />
+                  Export HTML
+                </button>
+                <button
+                  onClick={userData?.role !== 'pro' ? () => redirect('/pricing') : exportReact}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+                >
+                  <Download size={12} />
+                  Export React
+                </button>
+                <div className="border-t border-gray-800 mt-1 pt-1">
+                  <Link
+                    href={`/dashboard/settings/${projectId}`}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+                  >
+                    <Settings size={12} />
+                    Site settings
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {isCodeModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          onClick={() => setIsCodeModalOpen(false)}
+        >
+          <div
+            className="flex h-[calc(100vh-4rem)] w-full max-w-6xl flex-col overflow-hidden border border-gray-800 bg-[#111114] shadow-2xl"
+            onClick={event => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
+              <div>
+                <div className="text-sm font-semibold text-white">Project Code</div>
+                <div className="text-xs text-gray-400">{selectedCodeFile?.path || 'No files available'}</div>
+              </div>
+              <button
+                onClick={() => setIsCodeModalOpen(false)}
+                className="rounded-md px-3 py-2 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-800 hover:text-white"
+              >
+                Close
+              </button>
+            </div>
+            <div className="flex flex-1 overflow-hidden">
+              <div className="hidden w-72 flex-col border-r border-gray-800 bg-[#111114] p-4 md:flex">
+                <div className="text-[11px] uppercase tracking-[0.35em] text-gray-500">Files</div>
+                <div className="mt-3 flex-1 space-y-2 overflow-y-auto pr-1">
+                  {codeFiles.map(file => (
+                    <button
+                      key={file.path}
+                      onClick={() => setSelectedCodePath(file.path)}
+                      className={`w-full text-left rounded-xl px-3 py-2 text-xs transition-all ${selectedCodePath === file.path ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}
+                    >
+                      {file.path}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex-1 overflow-auto p-4 bg-[#1e1e1e]">
+                {selectedCodeFile ? (
+                  <Editor
+                    height="100%"
+                    language={selectedCodeFile.path.endsWith('.js') || selectedCodeFile.path.includes('jsx') ? 'javascript' :
+                      selectedCodeFile.path.endsWith('.html') ? 'html' :
+                        selectedCodeFile.path.endsWith('.css') ? 'css' :
+                          selectedCodeFile.path.endsWith('.md') ? 'markdown' :
+                            selectedCodeFile.path.endsWith('.json') ? 'json' :
+                              selectedCodeFile.path.endsWith('.txt') ? 'text' :
+                                selectedCodeFile.path.endsWith('.gitignore') ? 'gitignore' :
+                                  'plaintext'}
+                    value={selectedCodeFile.content}
+                    theme="vs-dark"
+                    options={{
+                      minimap: { enabled: false },
+                      fontSize: 12,
+                      lineHeight: 20,
+                      scrollBeyondLastLine: false,
+                      automaticLayout: true,
+                      readOnly: true,
+                    }}
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-sm text-gray-400">
+                    No generated code available.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };

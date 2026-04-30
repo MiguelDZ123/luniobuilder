@@ -184,17 +184,19 @@ export default function Dashboard() {
         <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-10 mb-8'>
           <div>
             <Link href='/' className='mb-40'>← Back to Home</Link>
-            <h1 className='text-3xl font-bold mt-10'>{userData?.name}</h1>
+            <div className='flex flex-row place-items-baseline gap-5'>
+              <h1 className='align-baseline text-3xl font-bold mt-10'>{userData?.name}</h1>
+              {userData?.role && (
+                <span className={`inline-block mt-4 px-3 py-1 text-xs font-semibold rounded-full 
+              ${userData.role.toLowerCase() === 'free' ? 'bg-gray-500/20 text-gray-300 border border-gray-500' :
+                    userData.role.toLowerCase() === 'pro' ? 'bg-blue-500/20 text-blue-300 border border-blue-500' :
+                      userData.role.toLowerCase() === 'business' ? 'bg-green-500/20 text-green-300 border border-green-500' :
+                        'bg-red-500/20 text-red-300 border border-red-500'}`}>
+                  {userData.role}
+                </span>
+              )}
+            </div>
             <p className='text-gray-400 mt-2'>Create new projects, open saved work, and go directly to the editor.</p>
-            {userData?.role && (
-              <span className={`inline-block mt-4 px-3 py-1 text-xs font-semibold rounded-full 
-              ${userData.role.toLowerCase() === 'free' ? 'bg-gray-600 text-gray-300' : 
-              userData.role.toLowerCase() === 'pro' ? 'bg-blue-600 text-white' : 
-              userData.role.toLowerCase() === 'business' ? 'bg-green-600 text-white' : 
-              'bg-red-500/20 text-red-300 border border-red-500'}`}>
-                {userData.role}
-              </span>
-            )}
           </div>
           <button
             onClick={createProject}
@@ -205,8 +207,8 @@ export default function Dashboard() {
             {reachedProjectLimit
               ? `Limit reached (${projectCount}/${projectLimit})`
               : saving
-              ? 'Creating…'
-              : 'Create New Project'}
+                ? 'Creating…'
+                : 'Create New Project'}
           </button>
         </div>
 

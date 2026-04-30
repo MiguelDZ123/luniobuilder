@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { TopBar } from '../components/TopBar';
 import { LeftPanel } from '../components/panels/LeftPanel';
 import { RightPanel } from '../components/panels/RightPanel';
@@ -34,7 +34,7 @@ export default function App() {
   const searchParams = useSearchParams();
   const projectQueryId = searchParams.get('projectId');
   const { data: session } = useSession();
- 
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -121,11 +121,11 @@ export default function App() {
 
   if (!session) {
     return <div className='bg-black w-full min-h-screen flex flex-col gap-2 items-center justify-center'>
-        <h1 className='text-3xl text-white'>Please sign in to access the editor</h1>
-        <Link href={"/"} className='ml-4 bg-linear-to-r from-[#1D976C] to-[#93F9B9] text-gray-800 font-bold py-2 px-4 rounded-lg'>
-          Back
-        </Link>
-      </div>;
+      <h1 className='text-3xl text-white'>Please sign in to access the editor</h1>
+      <Link href={"/"} className='ml-4 bg-linear-to-r from-[#1D976C] to-[#93F9B9] text-gray-800 font-bold py-2 px-4 rounded-lg'>
+        Back
+      </Link>
+    </div>;
   }
 
   if (!projectQueryId) {
