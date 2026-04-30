@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '../components/home/Header';
 
 interface ProjectRecord {
@@ -24,6 +24,7 @@ interface UserData {
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [projects, setProjects] = useState<ProjectRecord[]>([]);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,6 +32,7 @@ export default function Dashboard() {
   const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; projectId: string | null }>({ isOpen: false, projectId: null });
+  const [roleUpdated, setRoleUpdated] = useState(false);
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -40,6 +42,39 @@ export default function Dashboard() {
       setLoading(false);
     }
   }, [status]);
+
+  useEffect(() => {
+    if (status !== 'authenticated' || roleUpdated) {
+      return;
+    }
+
+    if (searchParams.get('checkout_success') !== 'true') {
+      return;
+    }
+
+    const patchRole = async () => {
+      setRoleUpdated(true);
+
+      const response = await fetch('/api/users', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ role: 'pro' }),
+      });
+
+      if (response.ok) {
+        await fetchUserData();
+      } else {
+        const responseData = await response.json().catch(() => null);
+        setError(responseData?.error || 'Unable to update subscription role.');
+      }
+
+      router.replace('/dashboard');
+    };
+
+    patchRole();
+  }, [status, searchParams, roleUpdated, router]);
 
   const fetchProjects = async () => {
     setLoading(true);

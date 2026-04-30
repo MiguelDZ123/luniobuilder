@@ -8,8 +8,40 @@ interface PricingTabsProps {
     hasSession: boolean;
 }
 
+interface UserData {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+}
+
 const PricingTabs: React.FC<PricingTabsProps> = ({ hasSession }) => {
     const [billing, setBilling] = useState<'monthly' | 'annually'>('monthly');
+    const [isLoading, setIsLoading] = useState(false);
+    const [message, setMessage] = useState<string | null>(null);
+
+    const [userData, setUserData] = useState<UserData | null>(null);
+
+    const fetchUserData = async () => {
+        try {
+            const response = await fetch('/api/users');
+            if (!response.ok) {
+                throw new Error('Failed to fetch user data');
+            }
+            const data = await response.json();
+            setUserData(data);
+        }
+        catch (error) {
+            console.error('Error fetching user data:', error);
+            setUserData(null);
+        }
+    };
+
+    useMemo(() => {
+        if (hasSession) {
+            fetchUserData();
+        }
+    }, [hasSession]);
 
     const proPrice = useMemo(() => {
         if (billing === 'monthly') {
@@ -17,6 +49,46 @@ const PricingTabs: React.FC<PricingTabsProps> = ({ hasSession }) => {
         }
         return { amount: '$48', label: '/year', note: 'Save 20%' };
     }, [billing]);
+
+    const handleSubscribe = async () => {
+        if (!hasSession) {
+            signIn('google');
+            return;
+        }
+
+        setIsLoading(true);
+        setMessage(null);
+
+        try {
+            const response = await fetch('/api/stripe/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ billing }),
+            });
+
+            const text = await response.text();
+            let data: { url?: string; error?: string } = {};
+            try {
+                data = JSON.parse(text);
+            } catch (parseError) {
+                throw new Error(`Unexpected response from checkout endpoint: ${text.slice(0, 250)}`);
+            }
+
+            if (!response.ok || !data.url) {
+                throw new Error(data?.error || 'Unable to start checkout.');
+            }
+
+            window.location.href = data.url;
+        } catch (error) {
+            console.error(error);
+            setMessage(
+                error instanceof Error
+                    ? error.message
+                    : 'Unable to create Stripe checkout session. Please try again later.'
+            );
+            setIsLoading(false);
+        }
+    };
 
     return (
         <div className='flex flex-col justify-between min-h-screen'>
@@ -99,8 +171,13 @@ const PricingTabs: React.FC<PricingTabsProps> = ({ hasSession }) => {
                         <h2 className='text-5xl font-normal mb-6 mt-6'>{proPrice.amount}</h2>
                         <span className='text-lg text-gray-500'>{proPrice.label}</span>
                     </div>
-                    <button className='w-full text-xl bg-blue-500/20 mb-4 text-blue-500 border-2 border-blue-500/40 py-2 px-4 rounded'>
-                        Subscribe
+                    <button
+                        type='button'
+                        onClick={handleSubscribe}
+                        disabled={userData?.role === 'pro' || isLoading}
+                        className={`w-full text-xl mb-4 rounded py-2 px-4 border-2 transition ${userData?.role === 'pro' ? 'cursor-default' : ''} ${isLoading ? 'cursor-wait border-gray-400 bg-gray-200 text-gray-500' : 'border-blue-500/40 bg-blue-500/20 text-blue-500 hover:bg-blue-500/30'}`}
+                    >
+                        {isLoading ? 'Redirecting…' : userData?.role === 'pro' ? 'Already Subscribed' : 'Subscribe'}
                     </button>
                     <hr />
                     <h6 className='text-sm font-bold mb-4 mt-4'>Extra Features Included:</h6>
