@@ -236,7 +236,7 @@ export const TopBar: React.FC = () => {
     setLoading(true);
     setError(null);
 
-    const response = await fetch('/api/users');
+    const response = await fetch(new URL('/api/users', window.location.origin));
     if (!response.ok) {
       setError('Unable to load user data.');
       setLoading(false);

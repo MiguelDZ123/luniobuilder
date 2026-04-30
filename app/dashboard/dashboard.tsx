@@ -55,7 +55,7 @@ export default function Dashboard() {
     const patchRole = async () => {
       setRoleUpdated(true);
 
-      const response = await fetch('/api/users', {
+      const response = await fetch(new URL('/api/users', window.location.origin), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +96,7 @@ export default function Dashboard() {
     setLoading(true);
     setError(null);
 
-    const response = await fetch('/api/users');
+    const response = await fetch(new URL('/api/users', window.location.origin));
     if (!response.ok) {
       setError('Unable to load user data.');
       setLoading(false);
