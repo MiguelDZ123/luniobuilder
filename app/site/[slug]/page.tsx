@@ -8,14 +8,13 @@ const getProjectBySubdomain = async (subdomain: string) => {
   const { data, error } = await supabaseServer
     .from('projects')
     .select('id, title, slug, content')
-    .or(`slug.eq.${cleaned},slug.eq./${cleaned}`)
-    .single();
+    .in('slug', [cleaned, `/${cleaned}`]);
 
-  if (error || !data) {
+  if (error || !data || data.length === 0) {
     return null;
   }
 
-  return data;
+  return data[0];
 };
 
 const renderProjectPage = (project: { title: string; content: any }) => {
