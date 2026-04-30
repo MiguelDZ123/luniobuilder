@@ -5,10 +5,11 @@ const normalizeSlug = (slug: string) => String(slug || '').replace(/^\/+/, '').t
 
 const getProjectBySubdomain = async (subdomain: string) => {
   const cleaned = normalizeSlug(subdomain);
+  const query = `slug.eq.${cleaned},slug.eq./${cleaned},slug.ilike.${cleaned},slug.ilike./${cleaned}`;
   const { data, error } = await supabaseServer
     .from('projects')
     .select('id, title, slug, content')
-    .in('slug', [cleaned, `/${cleaned}`]);
+    .or(query);
 
   if (error || !data || data.length === 0) {
     return null;
@@ -37,11 +38,21 @@ const renderProjectPage = (project: { title: string; content: any }) => {
   const title = page.seo?.title || project.title || 'Published Page';
   const description = page.seo?.description || '';
 
-  const html = `
-    <div style="min-height:100vh;margin:0;padding:0;font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
-      ${bodyContent}
-    </div>
-  `;
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${title}</title>
+    <meta name="description" content="${description}" />
+    <style>
+        body { margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+    </style>
+</head>
+<body>
+    ${bodyContent}
+</body>
+</html>`;
 
   return { title, description, html };
 };
@@ -76,7 +87,7 @@ export default async function SitePage({ params }: SitePageProps) {
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
         <div className="max-w-xl text-center">
           <h1 className="text-3xl font-semibold mb-4">Project not found</h1>
-          <p className="text-sm text-slate-300">We couldn't find a published project for this subdomain.</p>
+          <p className="text-sm text-slate-300">We couldn't find a published project for the subdomain <span className="text-white">{params.slug}</span>.</p>
         </div>
       </div>
     );
