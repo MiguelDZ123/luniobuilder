@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Monitor, Tablet, Smartphone, Undo2, Redo2, Eye, EyeOff,
   ZoomIn, ZoomOut, Download, Share2, Settings,
@@ -9,6 +9,8 @@ import {
   Loader,
   MonitorCheck,
   Code,
+  Folder,
+  X,
 } from 'lucide-react';
 import { useBuilderStore } from '../stores/builderStore';
 import {
@@ -135,6 +137,45 @@ const createZipBlob = (files: Array<{ path: string; content: string }>) => {
   chunks.push(new Uint8Array(endHeader));
 
   return new Blob(chunks as any, { type: 'application/zip' });
+};
+
+type FileTreeNode = {
+  name: string;
+  path?: string;
+  isFile: boolean;
+  children?: Record<string, FileTreeNode>;
+};
+
+const sortTreeNodes = (a: FileTreeNode, b: FileTreeNode) => {
+  if (a.isFile === b.isFile) return a.name.localeCompare(b.name);
+  return a.isFile ? 1 : -1;
+};
+
+const buildFileTree = (files: Array<{ path: string; content: string }>): FileTreeNode[] => {
+  const root: FileTreeNode = { name: '', isFile: false, children: {} };
+
+  files.forEach(file => {
+    const parts = file.path.split('/');
+    let current = root;
+
+    parts.forEach((part, index) => {
+      const isFile = index === parts.length - 1;
+      if (!current.children) current.children = {};
+
+      if (!current.children[part]) {
+        current.children[part] = {
+          name: part,
+          isFile,
+          path: isFile ? file.path : undefined,
+          children: isFile ? undefined : {},
+        };
+      }
+
+      current = current.children[part];
+    });
+  });
+
+  return root.children ? Object.values(root.children).sort(sortTreeNodes) : [];
 };
 
 export const TopBar: React.FC = () => {
@@ -399,6 +440,8 @@ export const TopBar: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const codeTree = useMemo(() => buildFileTree(codeFiles), [codeFiles]);
+
   const openCodeModal = () => {
     const projectName = page.name || 'LUNIOProject';
     const files = generateReactProjectFiles(pages, projectName);
@@ -409,6 +452,37 @@ export const TopBar: React.FC = () => {
 
   const selectedCodeFile = codeFiles.find(file => file.path === selectedCodePath) || codeFiles[0] || null;
 
+  const renderTreeNodes = (nodes: FileTreeNode[], depth = 0): React.ReactNode => {
+    return nodes.map(node => {
+      if (node.isFile) {
+        return (
+          <button
+            key={node.path}
+            onClick={() => node.path && setSelectedCodePath(node.path)}
+            className={`w-full text-left rounded-xl px-3 py-2 text-xs transition-all ${selectedCodePath === node.path ? 'bg-white/5 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}
+            style={{ paddingLeft: `${depth * 1.1}rem` }}
+          >
+            {node.name}
+          </button>
+        );
+      }
+
+      const children = node.children ? Object.values(node.children).sort(sortTreeNodes) : [];
+
+      return (
+        <div key={node.name}>
+          <div className="flex items-center gap-2 px-3 py-2 text-xs uppercase tracking-[0.25em] text-gray-500" style={{ paddingLeft: `${depth * 1.1}rem` }}>
+            <span className="text-gray-300"><Folder width={'15px'} /></span>
+            {node.name}
+          </div>
+          <div className="space-y-1">
+            {renderTreeNodes(children, depth + 1)}
+          </div>
+        </div>
+      );
+    });
+  };
+
   return (
     <>
       <header className="h-12 bg-[#0d1117] border-b border-gray-800 flex justify-between items-center px-4 gap-3 z-50 shrink-0">
@@ -416,7 +490,7 @@ export const TopBar: React.FC = () => {
           {/* Logo */}
           <div className="flex items-center gap-2 mr-2">
             <Link href="/dashboard" className="text-white font-semibold text-sm tracking-tight">
-              LUNIO Builder
+              {userData ? `${userData.name || userData.email}!` : 'LUNIO Builder'}
             </Link>
           </div>
 
@@ -593,6 +667,11 @@ export const TopBar: React.FC = () => {
                 >
                   <Download size={12} />
                   Export HTML
+                  {userData?.role !== 'pro' && (
+                    <span className="ml-auto inline-flex align-center rounded-full bg-blue-500/20 text-blue-300 border border-blue-300 text-[10px] px-2 py-0.5">
+                      Pro
+                    </span>
+                  )}
                 </button>
                 <button
                   onClick={userData?.role !== 'pro' ? () => redirect('/pricing') : exportReact}
@@ -600,6 +679,11 @@ export const TopBar: React.FC = () => {
                 >
                   <Download size={12} />
                   Export React
+                  {userData?.role !== 'pro' && (
+                    <span className="ml-auto inline-flex align-center rounded-full bg-blue-500/20 text-blue-300 border border-blue-300 text-[10px] px-2 py-0.5">
+                      Pro
+                    </span>
+                  )}
                 </button>
                 <div className="border-t border-gray-800 mt-1 pt-1">
                   <Link
@@ -634,22 +718,14 @@ export const TopBar: React.FC = () => {
                 onClick={() => setIsCodeModalOpen(false)}
                 className="rounded-md px-3 py-2 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-800 hover:text-white"
               >
-                Close
+                <X size={14} />
               </button>
             </div>
             <div className="flex flex-1 overflow-hidden">
               <div className="hidden w-72 flex-col border-r border-gray-800 bg-[#111114] p-4 md:flex">
                 <div className="text-[11px] uppercase tracking-[0.35em] text-gray-500">Files</div>
-                <div className="mt-3 flex-1 space-y-2 overflow-y-auto pr-1">
-                  {codeFiles.map(file => (
-                    <button
-                      key={file.path}
-                      onClick={() => setSelectedCodePath(file.path)}
-                      className={`w-full text-left rounded-xl px-3 py-2 text-xs transition-all ${selectedCodePath === file.path ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}
-                    >
-                      {file.path}
-                    </button>
-                  ))}
+                <div className="mt-3 overflow-y-auto pr-1">
+                  {renderTreeNodes(codeTree)}
                 </div>
               </div>
               <div className="flex-1 overflow-auto p-4 bg-[#1e1e1e]">

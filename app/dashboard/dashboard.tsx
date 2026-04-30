@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Header from '../components/home/Header';
 
 interface ProjectRecord {
   id: string;
@@ -184,10 +185,10 @@ export default function Dashboard() {
         <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-10 mb-8'>
           <div>
             <Link href='/' className='mb-40'>← Back to Home</Link>
-            <div className='flex flex-row place-items-baseline gap-5'>
-              <h1 className='align-baseline text-3xl font-bold mt-10'>{userData?.name}</h1>
+            <div className='flex flex-row items-center mt-10 gap-5'>
+              <h1 className='flex text-3xl font-bold'>{userData ? `👋🏼 Hi, ${userData.name || userData.email}!` : 'LUNIO Builder'}</h1>
               {userData?.role && (
-                <span className={`inline-block mt-4 px-3 py-1 text-xs font-semibold rounded-full 
+                <span className={`flex px-3 py-1 text-xs font-semibold rounded-full 
               ${userData.role.toLowerCase() === 'free' ? 'bg-gray-500/20 text-gray-300 border border-gray-500' :
                     userData.role.toLowerCase() === 'pro' ? 'bg-blue-500/20 text-blue-300 border border-blue-500' :
                       userData.role.toLowerCase() === 'business' ? 'bg-green-500/20 text-green-300 border border-green-500' :
@@ -201,8 +202,7 @@ export default function Dashboard() {
           <button
             onClick={createProject}
             disabled={saving || reachedProjectLimit || !userData}
-            className='rounded-full px-5 py-3 text-sm font-semibold text-black transition hover:opacity-90 disabled:opacity-60'
-            style={{ backgroundImage: reachedProjectLimit ? 'linear-gradient(90deg, #374151, #4b5563)' : 'linear-gradient(90deg, #1D976C, #93F9B9)' }}
+            className='rounded-full px-5 py-3 text-sm font-semibold text-white border-2 border-white/20 transition hover:bg-white/10 disabled:opacity-50 disabled:hover:bg-transparent'
           >
             {reachedProjectLimit
               ? `Limit reached (${projectCount}/${projectLimit})`
