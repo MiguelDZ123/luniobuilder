@@ -205,7 +205,6 @@ export const TopBar: React.FC = () => {
   const [published, setPublished] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishMessage, setPublishMessage] = useState('');
-  const [publishSlug, setPublishSlug] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
@@ -267,35 +266,43 @@ export const TopBar: React.FC = () => {
     return null;
   };
 
-  const publishToSubdomain = async () => {
+  const publishToVercel = async () => {
     setPublishMessage('');
     setShowPublishMenu(false);
 
-    if (!projectId) {
-      setPublishMessage('Save the project before publishing.');
+    const token = requestVercelToken();
+    if (!token) {
+      setPublishMessage('Vercel token required to publish.');
       return;
     }
 
-    const normalizedSlug = normalizePublishSlug(publishSlug || page.slug);
-    if (!normalizedSlug) {
-      setPublishMessage('Enter a valid slug before publishing.');
-      return;
-    }
+    const defaultName = page.name || 'luniobuilder-project';
+    const projectName = window.prompt('Vercel Project Name:', defaultName)?.trim() || defaultName;
+    const teamId = window.prompt('Vercel Team ID (optional):', '')?.trim() || undefined;
 
     setIsPublishing(true);
 
     try {
-      const response = await fetch('/api/publish', {
+      const response = await fetch('/api/vercel', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ projectId, slug: normalizedSlug }),
+        body: JSON.stringify({
+          token,
+          teamId,
+          projectName,
+          pages,
+        }),
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : {};
       if (!response.ok) {
-        throw new Error(data?.error || 'Publish failed');
+        const errorMessage = typeof data?.error === 'string'
+          ? data.error
+          : data?.message || JSON.stringify(data) || 'Vercel deployment failed';
+        throw new Error(errorMessage);
       }
 
       setPublished(true);
@@ -312,7 +319,7 @@ export const TopBar: React.FC = () => {
   };
 
   const handlePublish = () => {
-    publishToSubdomain();
+    publishToVercel();
   };
 
   const saveProject = useCallback(async (autoSave = false) => {
@@ -442,20 +449,6 @@ export const TopBar: React.FC = () => {
     setSelectedCodePath(files[0]?.path || '');
     setIsCodeModalOpen(true);
   };
-
-  const normalizePublishSlug = (value: string) => {
-    return String(value || '')
-      .trim()
-      .replace(/^\/+/, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9-]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  };
-
-  useEffect(() => {
-    const initialSlug = page.slug ? normalizePublishSlug(page.slug) : '';
-    setPublishSlug(initialSlug);
-  }, [page.slug]);
 
   const selectedCodeFile = codeFiles.find(file => file.path === selectedCodePath) || codeFiles[0] || null;
 
@@ -660,24 +653,13 @@ export const TopBar: React.FC = () => {
             </div>
 
             {showPublishMenu && (
-              <div className="absolute top-full right-0 mt-1 w-56 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl py-2 z-50">
-                <div className="px-4 py-3">
-                  <label className="text-[11px] uppercase tracking-[0.35em] text-gray-500 mb-2 block">Publish Slug</label>
-                  <input
-                    type="text"
-                    value={publishSlug}
-                    onChange={event => setPublishSlug(event.target.value)}
-                    placeholder="my-site"
-                    className="w-full rounded-xl border border-gray-700 bg-[#0f1218] px-3 py-2 text-xs text-white outline-none transition focus:border-blue-500"
-                  />
-                  <p className="mt-2 text-[10px] text-gray-400">This will publish to <span className="text-white">https://&lt;slug&gt;.luniobuilder.com</span>.</p>
-                </div>
+              <div className="absolute top-full right-0 mt-1 w-48 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl py-2 z-50">
                 <button
                   onClick={handlePublish}
                   className="w-full flex items-center gap-2 px-4 py-2 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
                 >
                   <Share2 size={12} />
-                  Publish to .luniobuilder.com
+                  Publish to Vercel
                 </button>
                 <button
                   onClick={userData?.role !== 'pro' ? () => router.push('/pricing') : exportHTML}
