@@ -1,81 +1,10 @@
 import Link from 'next/link'
-import { headers } from 'next/headers'
 import SignIn from './components/auth/googleSignIn'
 import UserAvatar from './components/auth/UserAvatar'
 import { auth } from './auth/auth'
 import Header from './components/home/Header'
-import { renderElementToHtml } from '@/app/utils/builderUtils'
-import { supabaseServer } from '@/app/lib/supabaseServer'
-
-const PUBLIC_DOMAIN = 'luniobuilder.com';
-const RESERVED_SUBDOMAINS = new Set(['www', 'api', 'dashboard', 'editor', 'static', '_next', '_static', 'favicon.ico', 'site']);
-
-const normalizeHost = (host: string | null) => {
-  if (!host) return null;
-  return host.split(':')[0].toLowerCase();
-};
-
-const getSubdomain = (host: string | null) => {
-  const normalized = normalizeHost(host);
-  if (!normalized || !normalized.endsWith(`.${PUBLIC_DOMAIN}`)) return null;
-  const subdomain = normalized.replace(`.${PUBLIC_DOMAIN}`, '');
-  if (!subdomain || RESERVED_SUBDOMAINS.has(subdomain)) return null;
-  return subdomain;
-};
-
-const getProjectBySlug = async (slug: string) => {
-  const normalized = String(slug || '').trim().toLowerCase();
-  const { data, error } = await supabaseServer
-    .from('projects')
-    .select('id, title, slug, content')
-    .eq('slug', normalized)
-    .single();
-
-  if (error || !data) {
-    return null;
-  }
-
-  return data;
-};
-
-const renderProject = (project: any) => {
-  const pages = project.content?.pages || [];
-  const currentPageId = project.content?.currentPageId;
-  const page = pages.find((item: any) => item.id === currentPageId) || pages[0];
-
-  if (!page) {
-    return (
-      <div className='min-h-screen bg-slate-950 text-white flex items-center justify-center p-6'>
-        <div className='max-w-xl text-center'>
-          <h1 className='text-3xl font-semibold mb-4'>Project not found</h1>
-          <p className='text-sm text-slate-300'>No content was found for this published project.</p>
-        </div>
-      </div>
-    );
-  }
-
-  const bodyContent = Array.isArray(page.elements) && page.elements.length
-    ? page.elements.map((element: any) => renderElementToHtml(element)).join('')
-    : '<div style="padding:32px;font-family:system-ui,sans-serif;color:#4b5563;">No content available.</div>';
-
-  return (
-    <div className='min-h-screen bg-white text-slate-900'>
-      <div dangerouslySetInnerHTML={{ __html: bodyContent }} />
-    </div>
-  );
-};
 
 const page = async () => {
-  const host = headers().get('host');
-  const subdomain = getSubdomain(host);
-
-  if (subdomain) {
-    const project = await getProjectBySlug(subdomain);
-    if (project) {
-      return renderProject(project);
-    }
-  }
-
   const session = await auth();
 
   return (
