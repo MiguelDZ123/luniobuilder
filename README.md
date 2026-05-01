@@ -6,7 +6,6 @@ LUNIO Builder is a NO-CODE website builder that allows you to create stunning we
 
 ## Screenshots
 
-![App Screenshot](https://i.ibb.co/k6HBmX0h/screen.png)
 ![App Screenshot](https://i.ibb.co/1fTKCss8/crop.png)
 
 
