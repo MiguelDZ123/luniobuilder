@@ -91,7 +91,7 @@ const PricingTabs: React.FC<PricingTabsProps> = ({ hasSession }) => {
     };
 
     return (
-        <div className='flex flex-col justify-between min-h-screen'>
+        <div className='flex flex-col justify-between min-h-screen mb-20'>
             <div className='flex flex-col md:flex-row px-[15%] max-lg:px-0 justify-center items-center gap-8 mt-20'>
                 <div className='flex flex-col items-center justify-center gap-6'>
                     <div className='rounded-3xl p-5 text-center'>
@@ -188,15 +188,6 @@ const PricingTabs: React.FC<PricingTabsProps> = ({ hasSession }) => {
                         <li className='mb-2'><span className='text-slate-600'>✽</span> 24/7 Priority Support</li>
                     </ul>
                 </div>
-            </div>
-
-            <div className='flex max-md:flex-col max-md:gap-1 justify-between bg-[#111114] py-5 w-full text-center text-gray-500 text-xs px-[15%] mt-20 max-lg:px-5'>
-                <h1>All Rights Reserved. Made with ❤️ by <a href='https://www.luniostudios.com/' target='_blank' rel='noopener noreferrer' className='text-gray-400 hover:text-gray-300 transition-colors underline'>LUNIO Studios</a></h1>
-                <ul className='flex flex-row'>
-                    <li className='ml-4'><a href='/terms' className='text-gray-400 hover:text-gray-300 transition-colors underline'>Terms of Service</a></li>
-                    <li className='ml-4'><a href='/privacy' className='text-gray-400 hover:text-gray-300 transition-colors underline'>Privacy Policy</a></li>
-                    <li className='ml-4'><a href='/contact' className='text-gray-400 hover:text-gray-300 transition-colors underline'>Usage Policy</a></li>
-                </ul>
             </div>
         </div>
     );
