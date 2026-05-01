@@ -140,7 +140,7 @@ export default function Dashboard() {
 
     const payload = {
       title: 'New Project',
-      slug: `/project-${Date.now()}`,
+      slug: `project-${Date.now()}`,
       content: {
         pages: [
           {

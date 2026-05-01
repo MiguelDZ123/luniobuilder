@@ -2,6 +2,16 @@ import { NextResponse } from 'next/server';
 import { auth } from '../../auth/auth';
 import { supabaseServer } from '../../lib/supabaseServer';
 
+const normalizeProjectSlug = (slug?: string): string => {
+  if (!slug) return '';
+  let cleaned = String(slug).trim().toLowerCase();
+  if (cleaned.startsWith('/')) {
+    cleaned = cleaned.replace(/^\/+/, '');
+  }
+  cleaned = cleaned.replace(/[^a-z0-9-]+/g, '-').replace(/(^-|-$)/g, '');
+  return cleaned;
+};
+
 export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user) {
@@ -107,7 +117,7 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   const title = body.title || 'Untitled Project';
-  const slug = body.slug || `/project-${Date.now()}`;
+  const slug = normalizeProjectSlug(body.slug) || `project-${Date.now()}`;
   const content = body.content || { pages: [], currentPageId: '' };
 
   const { data, error } = await supabaseServer
@@ -149,7 +159,7 @@ export async function PATCH(request: Request) {
   }
 
   if (body.slug !== undefined) {
-    updates.slug = body.slug || `/project-${Date.now()}`;
+    updates.slug = normalizeProjectSlug(body.slug) || `project-${Date.now()}`;
   }
 
   if (body.content !== undefined) {

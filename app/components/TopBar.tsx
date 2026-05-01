@@ -322,21 +322,84 @@ export const TopBar: React.FC = () => {
     publishToVercel();
   };
 
+  const publishToLunio = async () => {
+    setPublishMessage('');
+    setShowPublishMenu(false);
+    setIsPublishing(true);
+
+    try {
+      const savedProject = await saveProject(false);
+      const currentProjectId = savedProject?.id || projectId;
+      if (!currentProjectId) {
+        setPublishMessage('Save your project before publishing.');
+        return;
+      }
+
+      const defaultSlug = normalizeProjectSlug(page.slug || page.name || 'project') || `project-${Date.now()}`;
+      const subdomain = window.prompt('Choose a LUNIO subdomain for this site:', defaultSlug)?.trim();
+      const normalizedSlug = normalizeProjectSlug(subdomain || '');
+
+      if (!normalizedSlug) {
+        setPublishMessage('Valid subdomain is required (letters, numbers, hyphens).');
+        return;
+      }
+
+      const response = await fetch('/api/projects', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          projectId: currentProjectId,
+          slug: normalizedSlug,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || 'Unable to publish to LUNIO');
+      }
+
+      setPublished(true);
+      setPublishMessage(`Published to https://${normalizedSlug}.luniobuilder.com`);
+      setTimeout(() => setPublished(false), 5000);
+    } catch (error) {
+      console.error(error);
+      const message = error instanceof Error ? error.message : String(error);
+      setPublishMessage(message || 'Publish failed. Check console for details.');
+    } finally {
+      setIsPublishing(false);
+      setTimeout(() => setPublishMessage(''), 5000);
+    }
+  };
+
+  const normalizeProjectSlug = (slug: string) => {
+    return String(slug)
+      .trim()
+      .toLowerCase()
+      .replace(/^\/+/, '')
+      .replace(/[^a-z0-9-]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+  };
+
   const saveProject = useCallback(async (autoSave = false) => {
-    if (isSavingRef.current) return;
+    if (isSavingRef.current) return null;
     setSaveMessage('');
     setIsSaving(true);
     isSavingRef.current = true;
 
-    const payload = {
+    const payload: Record<string, unknown> = {
       projectId,
       title: page.name,
-      slug: page.slug || '/untitled',
       content: {
         pages,
         currentPageId,
       },
     };
+
+    if (!projectId) {
+      payload.slug = normalizeProjectSlug(page.name || `project-${Date.now()}`) || `project-${Date.now()}`;
+    }
 
     try {
       const response = await fetch('/api/projects', {
@@ -359,9 +422,11 @@ export const TopBar: React.FC = () => {
         }
       }
       setSaveMessage(autoSave ? 'Auto-saved successfully' : 'Saved successfully');
+      return data;
     } catch (error) {
       console.error(error);
       setSaveMessage('Failed to save');
+      return null;
     } finally {
       setIsSaving(false);
       isSavingRef.current = false;
@@ -660,6 +725,13 @@ export const TopBar: React.FC = () => {
                 >
                   <Share2 size={12} />
                   Publish to Vercel
+                </button>
+                <button
+                  onClick={publishToLunio}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+                >
+                  <MonitorCheck size={12} />
+                  Publish to LUNIO subdomain
                 </button>
                 <button
                   onClick={userData?.role !== 'pro' ? () => router.push('/pricing') : exportHTML}

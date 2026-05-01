@@ -143,14 +143,14 @@ export default function ProjectSettingsPage() {
           </div>
 
           <div>
-            <label className='mb-2 block text-sm font-medium text-gray-300'>Project slug</label>
+            <label className='mb-2 block text-sm font-medium text-gray-300'>Site subdomain</label>
             <input
               value={slug}
               onChange={event => setSlug(event.target.value)}
-              placeholder='/my-project'
+              placeholder='my-project'
               className='w-full rounded-2xl border border-gray-700 bg-[#0f1218] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500'
             />
-            <p className='mt-2 text-sm text-gray-500'>The slug is used to identify the project and can be changed here.</p>
+            <p className='mt-2 text-sm text-gray-500'>This value becomes your site address on LUNIO Builder: https://{slug.replace(/^\/+/, '') || 'your-site'}.luniobuilder.com</p>
           </div>
 
           <div>
