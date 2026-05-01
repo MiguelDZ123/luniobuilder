@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Roboto } from "next/font/google";
+import { Roboto } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Roboto({
@@ -13,8 +13,17 @@ const geistMono = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: "LUNIO Builder - No-code Website Builder",
+  title: "LUNIO Builder - Drag-and-Drop No-Code Website Builder",
   description: "LUNIO Builder is a no-code website builder that allows you to create stunning websites with ease. With its intuitive drag-and-drop interface, you can design and publish your website in minutes, without any coding knowledge.",
+  keywords: [
+    "LUNIO Builder",
+    "no-code website builder",
+    "drag-and-drop website builder",
+    "create websites without coding",
+    "easy website design",
+    "publish websites quickly",
+    "website builder for everyone",
+  ],
 };
 
 export default function RootLayout({
@@ -27,6 +36,16 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <meta property="og:image" content="/socials/og.png" />
+      <meta property="og:image:alt" content="LUNIO Builder" />
+      <meta property="og:image:type" content="image/png" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="twitter:image" content="/socials/og.png" />
+      <meta property="twitter:image:alt" content="LUNIO Builder" />
+      <meta property="twitter:image:type" content="image/png" />
+      <meta property="twitter:image:width" content="1200" />
+      <meta property="twitter:image:height" content="630" />
       <body className="min-h-full flex flex-col">
         {children}
         {/*Start of Tawk.to Script*/}
