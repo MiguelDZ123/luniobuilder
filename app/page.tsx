@@ -26,7 +26,7 @@ const page = async () => {
         </div>
         <div className='border-8 border-white/10 p-2 rounded-2xl'>
           <video autoPlay muted loop playsInline poster="/poster.png" width="640" height="360">
-            <source src="mev.webm" type="video/webm"></source>
+            <source src="home.webm" type="video/webm"></source>
           </video>
         </div>
       </div>
