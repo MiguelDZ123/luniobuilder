@@ -38,7 +38,8 @@ export default function App() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement).tagName);
+      const target = e.target as HTMLElement;
+      const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable;
       if (isInput) return;
 
       if ((e.metaKey || e.ctrlKey) && e.key === 'z') {

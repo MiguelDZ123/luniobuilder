@@ -61,7 +61,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   return (
     <div
       ref={ref}
-      className="fixed bg-gray-900 border border-gray-700 rounded-xl shadow-2xl py-1.5 z-[999] min-w-36"
+      className="fixed bg-gray-900 border border-gray-700 rounded-xl shadow-2xl py-1.5 z-999 min-w-36"
       style={{ left: x, top: y }}
     >
       {menuItems.map((item, i) =>

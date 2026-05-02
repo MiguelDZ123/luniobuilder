@@ -44,14 +44,35 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, isPre
   const safeTextStyles: React.CSSProperties = {
     ...safeCssStyles,
     overflowWrap: 'break-word',
+    boxSizing: 'border-box',
     wordBreak: 'break-word',
   };
-  const editingInputStyles: React.CSSProperties = {
+
+  const editingRef = useRef<HTMLElement | null>(null);
+  const editingTextStyles: React.CSSProperties = {
     ...safeTextStyles,
-    ...cssStyles,
-    display: 'inline-flex',
-    width: cssStyles.width || 'auto',
+    outline: 'none',
+    whiteSpace: 'pre-wrap',
     minWidth: 0,
+  };
+
+  useEffect(() => {
+    if (isEditing && editingRef.current) {
+      editingRef.current.focus();
+
+      const range = document.createRange();
+      range.selectNodeContents(editingRef.current);
+      const sel = window.getSelection();
+
+      if (sel) {
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }
+  }, [isEditing]);
+
+  const setEditingRef = (node: HTMLElement | null) => {
+    editingRef.current = node;
   };
 
   if (element.hidden && !isPreview) {
@@ -155,9 +176,15 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, isPre
   ].includes(type);
 
   const commitTextEdit = () => {
+    const finalText = editingRef.current?.innerText ?? editingValue;
     setIsEditing(false);
-    updateElementProps(element.id, { text: editingValue });
+    setEditingValue(finalText);
+    updateElementProps(element.id, { text: finalText });
     pushHistory();
+  };
+
+  const handleContentBlur = () => {
+    commitTextEdit();
   };
 
   const handleDoubleClick = (e: React.MouseEvent) => {
@@ -167,13 +194,14 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, isPre
     setIsEditing(true);
   };
 
-  const handleEditKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleEditKeyDown: React.KeyboardEventHandler<any> = (e) => {
     if (e.key === 'Enter' && element.type !== 'paragraph') {
       e.preventDefault();
       commitTextEdit();
     }
 
     if (e.key === 'Escape') {
+      e.preventDefault();
       setIsEditing(false);
       setEditingValue(element.props.text || '');
     }
@@ -188,70 +216,67 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, isPre
     draggedElementId === element.id ? 'opacity-40' : '',
   ].filter(Boolean).join(' ');
 
+  const editableKeyDownHandler = isEditing ? (handleEditKeyDown as any) : undefined;
+
   const dropIndicatorBefore = !isPreview && isDropTarget && dropPosition === 'before';
   const dropIndicatorAfter = !isPreview && isDropTarget && dropPosition === 'after';
 
   const renderContent = () => {
     switch (element.type) {
       case 'heading': {
-        const Tag = `h${element.props.level || 1}` as keyof JSX.IntrinsicElements;
-        return isEditing ? (
-          <input
-            autoFocus
-            value={editingValue}
-            onChange={e => setEditingValue(e.target.value)}
-            onBlur={commitTextEdit}
-            onKeyDown={handleEditKeyDown}
-            style={editingInputStyles}
-            className="outline-none"
-          />
-        ) : (
+        const Tag = `h${element.props.level || 1}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+        return (
           <Tag
-            style={safeTextStyles}
+            ref={(node) => setEditingRef(node as HTMLElement | null)}
+            style={isEditing ? editingTextStyles : safeTextStyles}
             onClick={handleClick}
             onDoubleClick={handleDoubleClick}
-            className={isPreview ? '' : 'cursor-pointer select-none'}
+            onBlur={isEditing ? handleContentBlur : undefined}
+            onKeyDown={editableKeyDownHandler}
+            contentEditable={!isPreview && isEditing}
+            suppressContentEditableWarning
+            className={isPreview ? '' : isEditing ? 'cursor-text' : 'cursor-pointer select-none'}
           >
-            {element.props.text || 'Heading'}
+            {isEditing ? editingValue : element.props.text || 'Heading'}
           </Tag>
         );
       }
 
       case 'paragraph':
-        return isEditing ? (
-          <textarea
-            autoFocus
-            value={editingValue}
-            onChange={e => setEditingValue(e.target.value)}
-            onBlur={commitTextEdit}
-            onKeyDown={handleEditKeyDown}
-            style={{ ...editingInputStyles, display: 'block', width: '100%' }}
-            className="border border-blue-300 focus:ring-2 focus:ring-blue-400 rounded px-2 py-1"
-          />
-        ) : (
+        return (
           <p
-            style={safeTextStyles}
+            ref={(node) => setEditingRef(node as HTMLElement | null)}
+            style={isEditing ? editingTextStyles : safeTextStyles}
             onClick={handleClick}
             onDoubleClick={handleDoubleClick}
-            className={isPreview ? '' : 'cursor-pointer select-none'}
+            onBlur={isEditing ? handleContentBlur : undefined}
+            onKeyDown={editableKeyDownHandler}
+            contentEditable={!isPreview && isEditing}
+            suppressContentEditableWarning
+            className={isPreview ? '' : isEditing ? 'cursor-text' : 'cursor-pointer select-none'}
           >
-            {element.props.text || 'Paragraph text'}
+            {isEditing ? editingValue : element.props.text || 'Paragraph text'}
           </p>
         );
 
       case 'button':
         return isEditing ? (
-          <input
-            autoFocus
-            value={editingValue}
-            onChange={e => setEditingValue(e.target.value)}
-            onBlur={commitTextEdit}
-            onKeyDown={handleEditKeyDown}
-            style={editingInputStyles}
-            className="border outline-none border-blue-300 focus:ring-blue-400 rounded px-2 py-1"
-          />
+          <span
+            ref={(node) => setEditingRef(node as HTMLElement | null)}
+            style={editingTextStyles}
+            onClick={handleClick}
+            onDoubleClick={handleDoubleClick}
+            onBlur={handleContentBlur}
+            onKeyDown={editableKeyDownHandler}
+            contentEditable={!isPreview && isEditing}
+            suppressContentEditableWarning
+            className={isPreview ? '' : 'cursor-text'}
+          >
+            {editingValue}
+          </span>
         ) : (
           <button
+            ref={(node) => setEditingRef(node as HTMLElement | null)}
             style={safeCssStyles}
             onClick={handleClick}
             onDoubleClick={handleDoubleClick}
@@ -262,25 +287,20 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, isPre
         );
 
       case 'link':
-        return isEditing ? (
-          <input
-            autoFocus
-            value={editingValue}
-            onChange={e => setEditingValue(e.target.value)}
-            onBlur={commitTextEdit}
-            onKeyDown={handleEditKeyDown}
-            style={{ ...editingInputStyles, width: 'auto' }}
-            className="border border-blue-300 focus:ring-2 focus:ring-blue-400 rounded px-2 py-1"
-          />
-        ) : (
+        return (
           <a
+            ref={(node) => setEditingRef(node as HTMLElement | null)}
             href={isPreview ? element.props.href : undefined}
-            style={safeTextStyles}
+            style={isEditing ? editingTextStyles : safeTextStyles}
             onClick={handleClick}
             onDoubleClick={handleDoubleClick}
-            className={isPreview ? '' : 'cursor-pointer select-none'}
+            onBlur={isEditing ? handleContentBlur : undefined}
+            onKeyDown={editableKeyDownHandler}
+            contentEditable={!isPreview && isEditing}
+            suppressContentEditableWarning
+            className={isPreview ? '' : isEditing ? 'cursor-text' : 'cursor-pointer select-none'}
           >
-            {element.props.text || 'Link'}
+            {isEditing ? editingValue : element.props.text || 'Link'}
           </a>
         );
 
@@ -373,24 +393,19 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, isPre
       }
 
       case 'listItem':
-        return isEditing ? (
-          <input
-            autoFocus
-            value={editingValue}
-            onChange={e => setEditingValue(e.target.value)}
-            onBlur={commitTextEdit}
-            onKeyDown={handleEditKeyDown}
-            style={{ ...editingInputStyles, width: 'auto' }}
-            className="border border-blue-300 focus:ring-2 focus:ring-blue-400 rounded px-2 py-1"
-          />
-        ) : (
+        return (
           <li
-            style={safeTextStyles}
+            ref={(node) => setEditingRef(node as HTMLElement | null)}
+            style={isEditing ? editingTextStyles : safeTextStyles}
             onClick={handleClick}
             onDoubleClick={handleDoubleClick}
-            className={isPreview ? '' : 'cursor-pointer select-none'}
+            onBlur={isEditing ? handleContentBlur : undefined}
+            onKeyDown={editableKeyDownHandler}
+            contentEditable={!isPreview && isEditing}
+            suppressContentEditableWarning
+            className={isPreview ? '' : isEditing ? 'cursor-text' : 'cursor-pointer select-none'}
           >
-            {element.props.text || 'List item'}
+            {isEditing ? editingValue : element.props.text || 'List item'}
           </li>
         );
 
