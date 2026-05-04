@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next"
 
 const geistSans = Roboto({
   variable: "--font-geist-sans",
@@ -47,6 +48,7 @@ export default function RootLayout({
       <meta property="twitter:image:width" content="1200" />
       <meta property="twitter:image:height" content="630" />
       <body className="min-h-full flex flex-col">
+        <Analytics />
         {children}
         {/*Start of Tawk.to Script*/}
         <script
