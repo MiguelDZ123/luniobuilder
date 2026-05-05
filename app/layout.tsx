@@ -39,11 +39,15 @@ export default function RootLayout({
     >
       <meta property="og:image" content="/socials/og.png" />
       <meta property="og:image:alt" content="LUNIO Builder" />
+      <meta property="og:title" content="LUNIO Builder - Drag-and-Drop No-Code Website Builder" />
+      <meta property="og:description" content="LUNIO Builder is a no-code website builder that allows you to create stunning websites with ease. With its intuitive drag-and-drop interface, you can design and publish your website in minutes, without any coding knowledge." />
       <meta property="og:image:type" content="image/png" />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
       <meta property="twitter:image" content="/socials/og.png" />
       <meta property="twitter:image:alt" content="LUNIO Builder" />
+      <meta property="twitter:title" content="LUNIO Builder - Drag-and-Drop No-Code Website Builder" />
+      <meta property="twitter:description" content="LUNIO Builder is a no-code website builder that allows you to create stunning websites with ease. With its intuitive drag-and-drop interface, you can design and publish your website in minutes, without any coding knowledge." />
       <meta property="twitter:image:type" content="image/png" />
       <meta property="twitter:image:width" content="1200" />
       <meta property="twitter:image:height" content="630" />
